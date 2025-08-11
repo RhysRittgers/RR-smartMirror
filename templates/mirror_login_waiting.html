@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Please Log In</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: sans-serif;
+        }
+        h1 {
+            font-size: 3em;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Login to Your Mirror</h1>
+
+    <script>
+
+        window.onerror = function(message, source, lineno, colno, error) {
+    console.error("🔴 JS ERROR:", message, source, lineno, colno, error);
+    };
+    const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror-login/");
+
+    mirrorSocket.onmessage = function(event) {
+        console.log("📥 Mirror received WS message:", event.data);
+        const data = JSON.parse(event.data);
+
+        if (data.type === "login_success") {
+            const token = data.token;
+            console.log("🔐 Received token:", token);
+
+            fetch("/auth/mirror-auth/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({token: token})
+            })
+            .then(response => {
+                console.log("🔁 Mirror auth response:", response.status);
+                return response.json();
+            })
+            .then(result => {
+                console.log("✅ Mirror auth result:", result);
+                if (result.status === "success") {
+                    console.log("🍪 Session cookie right after login:", document.cookie);
+                    window.location.href = "/";
+                }
+            })
+            .catch(error => {
+                console.error("❌ Mirror fetch error:", error);
+            });
+        }
+    };
+
+    mirrorSocket.onopen = () => {
+        console.log("🟢 Mirror WebSocket connected and waiting...");
+    };
+</script>
+
+    
+    
+
+</body>
+</html>

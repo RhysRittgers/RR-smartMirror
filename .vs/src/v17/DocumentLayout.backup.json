@@ -1,0 +1,721 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Owner\\smart_mirror_project\\src\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\settings.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:smart_mirror_project\\settings.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\.env||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.env||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\consumers.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Stocks\\consumers.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\routing.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Stocks\\routing.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\urls.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:smart_mirror_project\\urls.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\asgi.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:smart_mirror_project\\asgi.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\wsgi.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:smart_mirror_project\\wsgi.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Calendar\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Calendar\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\urls.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Stocks\\urls.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\calendar.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Calendar\\calendar.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\clock.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Clock\\clock.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\display.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Display\\display.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\message.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Message\\message.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\stocks.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Stocks\\stocks.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\urls.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Calendar\\urls.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Stocks\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\urls.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Message\\urls.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\urls.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Weather\\urls.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Weather\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Stocks\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\tests.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Stocks\\tests.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Weather\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Message\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Display\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Clock\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Message\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:profiles\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:profiles\\views.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\tests.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Calendar\\tests.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\apps.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:profiles\\apps.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Message\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\apps.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Message\\apps.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\apps.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Calendar\\apps.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Calendar\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\__init__.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Calendar\\__init__.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:profiles\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Display\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Clock\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Display\\models.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Weather\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Stocks\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Clock\\admin.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\tests.py||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Display\\tests.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": ".env",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\.env",
+              "RelativeDocumentMoniker": ".env",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\.env",
+              "RelativeToolTip": ".env",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-04-14T02:07:54.355Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "consumers.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\consumers.py",
+              "RelativeDocumentMoniker": "Stocks\\consumers.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\consumers.py",
+              "RelativeToolTip": "Stocks\\consumers.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-14T00:43:28.421Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "routing.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\routing.py",
+              "RelativeDocumentMoniker": "Stocks\\routing.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\routing.py",
+              "RelativeToolTip": "Stocks\\routing.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-14T00:43:53.494Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "settings.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\settings.py",
+              "RelativeDocumentMoniker": "smart_mirror_project\\settings.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\settings.py",
+              "RelativeToolTip": "smart_mirror_project\\settings.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T18:56:20.742Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "asgi.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\asgi.py",
+              "RelativeDocumentMoniker": "smart_mirror_project\\asgi.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\asgi.py",
+              "RelativeToolTip": "smart_mirror_project\\asgi.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-14T00:44:10.792Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "wsgi.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\wsgi.py",
+              "RelativeDocumentMoniker": "smart_mirror_project\\wsgi.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\wsgi.py",
+              "RelativeToolTip": "smart_mirror_project\\wsgi.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-17T19:50:41.828Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\models.py",
+              "RelativeDocumentMoniker": "Calendar\\models.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\models.py",
+              "RelativeToolTip": "Calendar\\models.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-17T16:21:28.021Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\views.py",
+              "RelativeDocumentMoniker": "Calendar\\views.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\views.py",
+              "RelativeToolTip": "Calendar\\views.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAADAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-08T01:17:19.79Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "urls.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\urls.py",
+              "RelativeDocumentMoniker": "smart_mirror_project\\urls.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\smart_mirror_project\\urls.py",
+              "RelativeToolTip": "smart_mirror_project\\urls.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-12T22:14:48.509Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "urls.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\urls.py",
+              "RelativeDocumentMoniker": "Stocks\\urls.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\urls.py",
+              "RelativeToolTip": "Stocks\\urls.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-14T00:08:04.56Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "calendar.html",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\calendar.html",
+              "RelativeDocumentMoniker": "Calendar\\calendar.html",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\calendar.html",
+              "RelativeToolTip": "Calendar\\calendar.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-02-17T16:10:37.772Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "clock.html",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\clock.html",
+              "RelativeDocumentMoniker": "Clock\\clock.html",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\clock.html",
+              "RelativeToolTip": "Clock\\clock.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-02-17T16:10:28.227Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "display.html",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\display.html",
+              "RelativeDocumentMoniker": "Display\\display.html",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\display.html",
+              "RelativeToolTip": "Display\\display.html",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-02-17T16:10:20.007Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "message.html",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\message.html",
+              "RelativeDocumentMoniker": "Message\\message.html",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\message.html",
+              "RelativeToolTip": "Message\\message.html",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-02-17T16:10:05.814Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "stocks.html",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\stocks.html",
+              "RelativeDocumentMoniker": "Stocks\\stocks.html",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\stocks.html",
+              "RelativeToolTip": "Stocks\\stocks.html",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-02-17T16:09:52.464Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\views.py",
+              "RelativeDocumentMoniker": "Stocks\\views.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\views.py",
+              "RelativeToolTip": "Stocks\\views.py",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAB0AAABTAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-13T23:47:23.355Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "urls.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\urls.py",
+              "RelativeDocumentMoniker": "Calendar\\urls.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\urls.py",
+              "RelativeToolTip": "Calendar\\urls.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-12T22:11:14.093Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\models.py",
+              "RelativeDocumentMoniker": "Weather\\models.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\models.py",
+              "RelativeToolTip": "Weather\\models.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAACAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T21:07:38.024Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "urls.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\urls.py",
+              "RelativeDocumentMoniker": "Weather\\urls.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\urls.py",
+              "RelativeToolTip": "Weather\\urls.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAABAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-13T21:22:07.415Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "urls.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\urls.py",
+              "RelativeDocumentMoniker": "Message\\urls.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\urls.py",
+              "RelativeToolTip": "Message\\urls.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-13T00:03:57.562Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\models.py",
+              "RelativeDocumentMoniker": "Stocks\\models.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\models.py",
+              "RelativeToolTip": "Stocks\\models.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T21:08:11.058Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "tests.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\tests.py",
+              "RelativeDocumentMoniker": "Stocks\\tests.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\tests.py",
+              "RelativeToolTip": "Stocks\\tests.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-13T23:47:20.901Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\views.py",
+              "RelativeDocumentMoniker": "Weather\\views.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\views.py",
+              "RelativeToolTip": "Weather\\views.py",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAADIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-13T20:19:48.788Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\views.py",
+              "RelativeDocumentMoniker": "Message\\views.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\views.py",
+              "RelativeToolTip": "Message\\views.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-13T00:04:32.971Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\views.py",
+              "RelativeDocumentMoniker": "Display\\views.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\views.py",
+              "RelativeToolTip": "Display\\views.py",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-13T00:07:39.114Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\views.py",
+              "RelativeDocumentMoniker": "Clock\\views.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\views.py",
+              "RelativeToolTip": "Clock\\views.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-13T00:07:35.452Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\models.py",
+              "RelativeDocumentMoniker": "Message\\models.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\models.py",
+              "RelativeToolTip": "Message\\models.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T21:08:46.968Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "views.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\views.py",
+              "RelativeDocumentMoniker": "profiles\\views.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\views.py",
+              "RelativeToolTip": "profiles\\views.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-13T00:06:41.324Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\models.py",
+              "RelativeDocumentMoniker": "profiles\\models.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\models.py",
+              "RelativeToolTip": "profiles\\models.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T20:29:26.664Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "apps.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\apps.py",
+              "RelativeDocumentMoniker": "profiles\\apps.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\apps.py",
+              "RelativeToolTip": "profiles\\apps.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-12T22:45:06.682Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "apps.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\apps.py",
+              "RelativeDocumentMoniker": "Calendar\\apps.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\apps.py",
+              "RelativeToolTip": "Calendar\\apps.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-08T01:17:32.465Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "apps.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\apps.py",
+              "RelativeDocumentMoniker": "Message\\apps.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\apps.py",
+              "RelativeToolTip": "Message\\apps.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-08T01:17:43.261Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "tests.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\tests.py",
+              "RelativeDocumentMoniker": "Calendar\\tests.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\tests.py",
+              "RelativeToolTip": "Calendar\\tests.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-08T01:17:29.837Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "admin.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\admin.py",
+              "RelativeDocumentMoniker": "Message\\admin.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Message\\admin.py",
+              "RelativeToolTip": "Message\\admin.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T22:00:22.165Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "admin.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\admin.py",
+              "RelativeDocumentMoniker": "Calendar\\admin.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\admin.py",
+              "RelativeToolTip": "Calendar\\admin.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T21:58:54.27Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 35,
+              "Title": "__init__.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\__init__.py",
+              "RelativeDocumentMoniker": "Calendar\\__init__.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Calendar\\__init__.py",
+              "RelativeToolTip": "Calendar\\__init__.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-08T01:17:28.561Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 36,
+              "Title": "admin.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\admin.py",
+              "RelativeDocumentMoniker": "profiles\\admin.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\profiles\\admin.py",
+              "RelativeToolTip": "profiles\\admin.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T21:55:21.654Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 38,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\models.py",
+              "RelativeDocumentMoniker": "Clock\\models.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\models.py",
+              "RelativeToolTip": "Clock\\models.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAArAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T21:19:07.583Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 39,
+              "Title": "models.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\models.py",
+              "RelativeDocumentMoniker": "Display\\models.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\models.py",
+              "RelativeToolTip": "Display\\models.py",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T21:07:10.694Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 40,
+              "Title": "admin.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\admin.py",
+              "RelativeDocumentMoniker": "Weather\\admin.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Weather\\admin.py",
+              "RelativeToolTip": "Weather\\admin.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T22:01:59.982Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 37,
+              "Title": "admin.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\admin.py",
+              "RelativeDocumentMoniker": "Display\\admin.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\admin.py",
+              "RelativeToolTip": "Display\\admin.py",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T22:00:02.577Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 41,
+              "Title": "admin.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\admin.py",
+              "RelativeDocumentMoniker": "Stocks\\admin.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Stocks\\admin.py",
+              "RelativeToolTip": "Stocks\\admin.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T22:01:18.233Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 42,
+              "Title": "admin.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\admin.py",
+              "RelativeDocumentMoniker": "Clock\\admin.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Clock\\admin.py",
+              "RelativeToolTip": "Clock\\admin.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAEAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T21:59:26.105Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 43,
+              "Title": "tests.py",
+              "DocumentMoniker": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\tests.py",
+              "RelativeDocumentMoniker": "Display\\tests.py",
+              "ToolTip": "C:\\Users\\Owner\\smart_mirror_project\\src\\Display\\tests.py",
+              "RelativeToolTip": "Display\\tests.py",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-02-03T21:27:12.802Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

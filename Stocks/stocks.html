@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+    <head>
+
+      <title>Smart Mirror Stocks</title>
+
+      <link rel="stylesheet"  type="text/css" href="styles.css">
+
+      <meta charset="utf-8">
+
+    </head>
+
+    <body>
+
+        <h2>
+            Live Stock Prices
+        </h2>
+
+        <div class="stock-grid" id="stocksGrid">
+            <!-- Stocks will be dynamically inserted here -->
+        </div>
+        
+        <script>
+        const stocks = {};  // This will store latest price data by symbol
+        
+        // Connect to the WebSocket
+        const socket = new WebSocket('ws://localhost:8000/ws/Stocks/');
+        
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+        
+            if (data.type === 'trade' && data.data) {
+                data.data.forEach(trade => {
+                    const symbol = trade.s;
+                    const price = trade.p;
+        
+                    if (!stocks[symbol]) {
+                        stocks[symbol] = { price: price, previousPrice: price };
+                    } else {
+                        stocks[symbol].previousPrice = stocks[symbol].price;
+                        stocks[symbol].price = price;
+                    }
+        
+                    updateStockDisplay(symbol);
+                });
+            }
+        };
+        
+        function updateStockDisplay(symbol) {
+            const grid = document.getElementById('stocksGrid');
+            let stockDiv = document.getElementById(`stock-${symbol}`);
+        
+            if (!stockDiv) {
+                stockDiv = document.createElement('div');
+                stockDiv.id = `stock-${symbol}`;
+                stockDiv.classList.add('stock');
+                stockDiv.innerHTML = `
+                    <div class="stock-name">${symbol}</div>
+                    <div class="stock-price" id="price-${symbol}"></div>
+                `;
+                grid.appendChild(stockDiv);
+            }
+        
+            const priceDiv = document.getElementById(`price-${symbol}`);
+            const stock = stocks[symbol];
+            const changeClass = stock.price > stock.previousPrice ? 'up' : 'down';
+        
+            priceDiv.innerHTML = `
+                $${stock.price.toFixed(2)}
+                <span class="${changeClass}">
+                    ${stock.price > stock.previousPrice ? '▲' : '▼'}
+                </span>
+            `;
+        }
+        </script>
+
+    </body>
+</html>

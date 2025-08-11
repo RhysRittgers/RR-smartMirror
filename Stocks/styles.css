@@ -1,0 +1,32 @@
+/* Reset */
+header, body, main, h1, h3{
+    padding: 0%;
+    margin: 0%;
+}
+
+/* Body */
+body {
+    font-family: Arial, sans-serif;
+    background-color: black;
+    color: white;
+}
+
+/* Classes */
+.stock-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.stock {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+}
+.stock-name {
+    font-weight: bold;
+}
+.stock-price {
+    font-size: 1.5rem;
+}
+.up { color: #4caf50; }
+.down { color: #f44336; }
