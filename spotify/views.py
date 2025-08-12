@@ -5,6 +5,7 @@ import urllib.parse
 from django.conf import settings
 from django.shortcuts import redirect, render
 from django.http import HttpResponse, JsonResponse
+from django.contrib.auth.decorators import login_required
 
 def spotify_login(request):
     scopes = "user-read-playback-state user-modify-playback-state user-read-currently-playing streaming"
@@ -41,3 +42,8 @@ def spotify_callback(request):
     request.session["spotify_refresh_token"] = token_info.get("refresh_token")
 
     return redirect("/Dashboard/")  # or your remote dashboard
+
+@login_required
+def current_track(request):
+    # TODO: replace with real Spotify logic
+    return JsonResponse({"track": None, "status": "not_implemented"}, status=200)
