@@ -31,7 +31,7 @@ urlpatterns = [
     path('Weather/', include('Weather.urls')),
     path('Stocks/', include('Stocks.urls')),
     path('Dashboard/', include('Dashboard.urls')),
-    path("Spotify/", include("spotify.urls")),
+    path("spotify/", include("spotify.urls")),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
