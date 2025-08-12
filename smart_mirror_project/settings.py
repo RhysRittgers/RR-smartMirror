@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'Stocks',
     'Weather',
     'Authentication',
-    'spotify',
+    #'spotify',
 
 ]
 
