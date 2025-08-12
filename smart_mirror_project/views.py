@@ -15,6 +15,6 @@ def home(request):
         else:
             return render(request, "mirror_login_waiting.html") #waiting screen when mirror connects
     else:
-        return redirect("mobile_dashboard") #user remote login
+        return redirect("Dashboard:mobile_dashboard") #user remote login
     #else:
         #return HttpResponse("Invalid domain", status=400)

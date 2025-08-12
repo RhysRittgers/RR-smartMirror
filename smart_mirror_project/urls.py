@@ -30,8 +30,10 @@ urlpatterns = [
     path('Message/', include('Message.urls')),
     path('Weather/', include('Weather.urls')),
     path('Stocks/', include('Stocks.urls')),
-    path('Dashboard/', include('Dashboard.urls')),
-    path("spotify/", include("spotify.urls")),
+    
+    path('Dashboard/', include(('Dashboard.urls', 'Dashboard'), namespace='Dashboard')),
+
+    path('spotify/', include('spotify.urls')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
