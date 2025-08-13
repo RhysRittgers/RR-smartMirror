@@ -7,4 +7,5 @@ urlpatterns = [
     path("callback/", views.spotify_callback, name="callback"),
     path("current/", views.current_track, name="current"),
     path("control/", views.control, name="control"),   # POST {"action":"pause"|...}
+    path("debug/", views.debug_tokens, name="debug"),
 ]

@@ -126,3 +126,15 @@ def control(request):
         return HttpResponseBadRequest("Unsupported action")
     # For play with a specific context/uri, send json body; otherwise empty {} is fine
     return _api_request(request, "PUT", path, json_body=body.get("args"))
+
+# --- TEMP DEBUG, remove later ---
+from django.http import JsonResponse
+
+def debug_tokens(request):
+    return JsonResponse({
+        "whoami": request.user.username if request.user.is_authenticated else "AnonymousUser",
+        "has_access_token": bool(request.session.get("spotify_access_token")),
+        "has_refresh_token": bool(request.session.get("spotify_refresh_token")),
+        "session_key": request.session.session_key,
+    })
+
