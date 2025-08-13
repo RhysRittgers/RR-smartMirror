@@ -16,11 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from Authentication.views import login_view, logout_view 
-from .views import home     #imports the home view 
-from Dashboard.views import mobile_dashboard
+from .views import home
+from .diag import diag
 from django.conf import settings
 from django.conf.urls.static import static
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,6 +30,7 @@ urlpatterns = [
     path('Message/', include('Message.urls')),
     path('Weather/', include('Weather.urls')),
     path('Stocks/', include('Stocks.urls')),
+    path('diag/', diag, name='diag'),
     
     path('Dashboard/', include(('Dashboard.urls', 'Dashboard'), namespace='Dashboard')),
 
