@@ -6,6 +6,8 @@ from django.conf import settings
 from django.shortcuts import redirect
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_ME_PLAYER = "https://api.spotify.com/v1/me/player"
@@ -133,3 +135,94 @@ def current_track(request):
             "image": ((item.get("album") or {}).get("images") or [{}])[0].get("url"),
         }
     })
+
+SPOTIFY_DEVICES     = "https://api.spotify.com/v1/me/player/devices"
+SPOTIFY_PLAYER      = "https://api.spotify.com/v1/me/player"
+SPOTIFY_NEXT        = "https://api.spotify.com/v1/me/player/next"
+SPOTIFY_PREVIOUS    = "https://api.spotify.com/v1/me/player/previous"
+SPOTIFY_PLAY        = "https://api.spotify.com/v1/me/player/play"
+SPOTIFY_PAUSE       = "https://api.spotify.com/v1/me/player/pause"
+SPOTIFY_TRANSFER    = "https://api.spotify.com/v1/me/player"
+SPOTIFY_SEEK        = "https://api.spotify.com/v1/me/player/seek"
+SPOTIFY_VOLUME      = "https://api.spotify.com/v1/me/player/volume"
+
+def _spotify_api(request, method, url, **kw):
+    token = _ensure_access_token(request)
+    if not token:
+        return None, {"error": "no_token"}, 401
+    headers = kw.pop("headers", {})
+    headers["Authorization"] = f"Bearer {token}"
+    r = requests.request(method, url, headers=headers, **kw)
+    try:
+        body = r.json() if r.text else {}
+    except Exception:
+        body = {"raw": r.text}
+    return r, body, r.status_code
+
+def _normalize_state(json_obj):
+    if not json_obj:
+        return {"playing": False, "track": None}
+    item = (json_obj or {}).get("item") or {}
+    return {
+        "is_playing": json_obj.get("is_playing"),
+        "progress_ms": json_obj.get("progress_ms"),
+        "device": (json_obj.get("device") or {}).get("name"),
+        "track": {
+            "name": item.get("name"),
+            "artists": [a.get("name") for a in (item.get("artists") or [])],
+            "album": (item.get("album") or {}).get("name"),
+            "image": ((item.get("album") or {}).get("images") or [{}])[0].get("url"),
+        }
+    }
+
+@login_required
+def devices(request):
+    r, body, status = _spotify_api(request, "GET", SPOTIFY_DEVICES)
+    return JsonResponse(body, status=status)
+
+@login_required
+def state(request):
+    r, body, status = _spotify_api(request, "GET", SPOTIFY_PLAYER)
+    if status == 204:  # no active device
+        return JsonResponse({"is_playing": False, "track": None})
+    return JsonResponse(_normalize_state(body), status=200 if status == 200 else status)
+
+@login_required
+def control(request, action):
+    # Map simple actions to endpoints
+    routes = {
+        "next":  ("POST", SPOTIFY_NEXT, {}),
+        "prev":  ("POST", SPOTIFY_PREVIOUS, {}),
+        "play":  ("PUT",  SPOTIFY_PLAY, {"json": {}}),
+        "pause": ("PUT",  SPOTIFY_PAUSE, {}),
+    }
+    if action == "seek":
+        ms = int(request.GET.get("ms", "0"))
+        method, url, extra = "PUT", f"{SPOTIFY_SEEK}?position_ms={ms}", {}
+    elif action == "volume":
+        vol = int(request.GET.get("v", "50"))
+        method, url, extra = "PUT", f"{SPOTIFY_VOLUME}?volume_percent={vol}", {}
+    elif action == "transfer":
+        device_id = request.GET.get("device_id")
+        if not device_id:
+            return JsonResponse({"error": "device_id required"}, status=400)
+        method, url, extra = "PUT", SPOTIFY_TRANSFER, {"json": {"device_ids": [device_id], "play": True}}
+    else:
+        if action not in routes:
+            return JsonResponse({"error": "unknown_action"}, status=400)
+        method, url, extra = routes[action]
+
+    r, body, status = _spotify_api(request, method, url, **extra)
+    if status not in (200, 201, 202, 204):
+        return JsonResponse({"error": "spotify_error", "status": status, "body": body}, status=400)
+
+    # pull fresh state and broadcast to mirror via Channels
+    r2, body2, st2 = _spotify_api(request, "GET", SPOTIFY_PLAYER)
+    norm = _normalize_state(body2) if st2 == 200 else {"is_playing": False, "track": None}
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"user_{request.user.id}",
+        {"type": "spotify.update", "payload": norm}
+    )
+    return JsonResponse({"ok": True, "state": norm})
+
