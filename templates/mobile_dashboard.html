@@ -36,6 +36,49 @@
     <button type="submit">Add Event</button>
 </form>
 
+<!-- SPOTIFY CONTROL -->
+<h2>Spotify</h2>
+<p>
+  <a href="/spotify/login/">Connect Spotify</a>
+</p>
+<div>
+  <button id="sp-prev">Prev</button>
+  <button id="sp-play">Play</button>
+  <button id="sp-pause">Pause</button>
+  <button id="sp-next">Next</button>
+</div>
+<div style="margin-top:8px;">
+  Volume: <input id="sp-vol" type="range" min="0" max="100" value="50">
+</div>
+<pre id="sp-state" style="background:#f6f6f6;padding:8px;"></pre>
+<script>
+  function getCookie(name){
+    const v = document.cookie.split('; ').find(r=>r.startsWith(name+'='));
+    return v ? decodeURIComponent(v.split('=')[1]) : '';
+  }
+  async function ctrl(action, qs=''){
+    const res = await fetch(`/spotify/control/${action}/${qs}`, {
+      method: 'POST',
+      headers: {'X-CSRFToken': getCookie('csrftoken')},
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    const j = await res.json().catch(()=>({}));
+    try { document.getElementById('sp-state').textContent = JSON.stringify(j.state||j, null, 2); } catch(e){}
+  }
+  document.getElementById('sp-prev').onclick  = ()=>ctrl('prev');
+  document.getElementById('sp-play').onclick  = ()=>ctrl('play');
+  document.getElementById('sp-pause').onclick = ()=>ctrl('pause');
+  document.getElementById('sp-next').onclick  = ()=>ctrl('next');
+  document.getElementById('sp-vol').oninput   = (e)=>ctrl('volume', `?v=${e.target.value}`);
+
+  // show initial state on load
+  fetch('/spotify/state/', {credentials:'include'}).then(r=>r.json()).then(j=>{
+    document.getElementById('sp-state').textContent = JSON.stringify(j, null, 2);
+  });
+</script>
+
+
 <button id="remoteLogoutBtn">Logout</button>
 
 <script>

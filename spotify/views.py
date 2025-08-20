@@ -15,6 +15,7 @@ SPOTIFY_CURRENT = "https://api.spotify.com/v1/me/player/currently-playing"
 
 SCOPES = "user-read-playback-state user-modify-playback-state user-read-currently-playing streaming"
 
+@login_required
 def spotify_login(request):
     params = {
         "client_id": settings.SPOTIFY_CLIENT_ID,

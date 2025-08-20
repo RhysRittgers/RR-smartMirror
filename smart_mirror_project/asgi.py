@@ -15,7 +15,7 @@ from Stocks.routing import websocket_urlpatterns as stocks_ws
 from Message.routing import websocket_urlpatterns as message_ws
 from Calendar.routing import websocket_urlpatterns as calendar_ws
 from Authentication.routing import websocket_urlpatterns as auth_ws
-from spotify.routing import websocket_urlpatterns as spotify_ws  # ✅ NEW
+from spotify.routing import websocket_urlpatterns as spotify_ws
 
 combined_websockets = stocks_ws + message_ws + calendar_ws + auth_ws + spotify_ws  # ✅ add spotify
 
