@@ -65,11 +65,11 @@ def add_event(request):
     # Broadcast to mirror
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
-        f"user_{request.user.id}",
-        {
-            "type": "calendar_event",
-            "event": event.as_dict()
-        }
+       "mirror_calendar",
+       {
+           "type": "calendar_event",
+           "event": event.as_dict(),
+       }
     )
 
     return JsonResponse({"status": "Event saved and broadcasted!"})
