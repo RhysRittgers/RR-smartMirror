@@ -66,15 +66,30 @@
 
         // Calendar WebSocket
         const calendarSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
-        calendarSocket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const calendarDiv = document.getElementById("calendarEvents");
-            if (data.event) {
-                const entry = document.createElement("div");
-                entry.innerHTML = `<strong>${data.event.event_name}</strong> - ${data.event.event_time}<br>${data.event.event_description || ''}`;
-                calendarDiv.appendChild(entry);
-            }
-        };
+  calendarSocket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    const ev = data.event;
+    if (!ev) return;
+
+    const d = new Date(`${ev.event_date}T00:00:00`);
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+
+    const list = document.getElementById(`list-${dayName}`);
+    if (!list) {
+      fetch('/Calendar/upcoming_events/')
+        .then(r => r.json())
+        .then(j => displayCalendarEvents(j.Week))
+        .catch(() => {});
+      return;
+    }
+
+    const placeholder = list.querySelector('li[data-placeholder="true"]');
+    if (placeholder) placeholder.remove();
+
+    const li = document.createElement('li');
+    li.innerHTML = `<strong>${ev.event_name}</strong> - ${ev.event_time}<br>${ev.event_description || ''}`;
+    list.appendChild(li);
+  };
 
         // Stocks WebSocket
         const stocks = {};
@@ -147,20 +162,34 @@
             .catch(error => console.error('Error fetching calendar events:', error));
     }
 
-    function displayCalendarEvents(events) {
-        const calendarDiv = document.getElementById('calendarEvents');
-        calendarDiv.innerHTML = '';
-        for (const [day, dayEvents] of Object.entries(events)) {
-            let eventHTML = `<h3>${day}</h3><ul>`;
-            dayEvents.forEach(event => {
-                eventHTML += typeof event === "string"
-                    ? `<li>${event}</li>`
-                    : `<li><strong>${event.event_name}</strong> - ${event.event_time}<br>${event.event_description || ''}</li>`;
-            });
-            eventHTML += `</ul>`;
-            calendarDiv.innerHTML += eventHTML;
-        }
+     function displayCalendarEvents(events) {
+    const calendarDiv = document.getElementById('calendarEvents');
+    calendarDiv.innerHTML = '';
+
+    for (const [day, dayEvents] of Object.entries(events)) {
+      const listId = `list-${day}`; // e.g. list-Tuesday
+
+      const section = document.createElement('div');
+      section.className = 'day-section';
+      section.innerHTML = `<h3>${day}</h3><ul id="${listId}"></ul>`;
+      calendarDiv.appendChild(section);
+
+      const ul = section.querySelector('ul');
+
+      if (!dayEvents.length || (dayEvents.length === 1 && typeof dayEvents[0] === 'string')) {
+        const li = document.createElement('li');
+        li.textContent = 'No events scheduled';
+        li.setAttribute('data-placeholder', 'true');
+        ul.appendChild(li);
+      } else {
+        dayEvents.forEach(ev => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${ev.event_name}</strong> - ${ev.event_time}<br>${ev.event_description || ''}`;
+          ul.appendChild(li);
+        });
+      }
     }
+  }
 
     function fetchWeather() {
         fetch('/Weather/user_weather/')
