@@ -3,6 +3,7 @@ from .views import login_view, logout_view
 from .views import generate_mirror_token
 from .views import mirror_authenticate
 from .views import csrf_token_view
+from . import views
 
 urlpatterns = [
     path('login/', login_view, name='login'),
@@ -10,4 +11,5 @@ urlpatterns = [
     path('generate-token/', generate_mirror_token, name='generate_token'),
     path('mirror-auth/', mirror_authenticate, name='mirror_authenticate'),
     path('csrf/', csrf_token_view, name='get_csrf'),
+    path("settings/time-format/", views.time_format, name="time_format"),
 ]

@@ -10,6 +10,8 @@ from asgiref.sync import async_to_sync
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.contrib.sessions.models import Session
+from django.views.decorators.http import require_http_methods
+from .models import UserPreference
 
 User = get_user_model()
 
@@ -88,3 +90,15 @@ def csrf_token_view(request):
 def logout_view(request):
     logout(request)
     return redirect('/')
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def time_format(request):
+    prefs, _ = UserPreference.objects.get_or_create(user=request.user)
+
+    if request.method == "POST":
+        val = str(request.POST.get("use_24h", "")).lower()
+        prefs.use_24h = val in ("1", "true", "yes", "on")
+        prefs.save()
+
+    return JsonResponse({"use_24h": prefs.use_24h})
