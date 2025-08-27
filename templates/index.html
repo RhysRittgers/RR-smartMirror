@@ -5,6 +5,28 @@
   <title>Smart Mirror - Live Dashboard</title>
   <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
   <meta charset="utf-8">
+
+  <style>
+    /* tiny styles just for calendar look */
+    .calendar-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin: 0 0 6px 0;
+    }
+    .calendar-month {
+      font-size: 0.95rem; opacity: 0.8; letter-spacing: 0.5px;
+    }
+    .day-section { margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .day-section.today { background: rgba(255,255,255,0.06); border-radius: 8px; padding: 6px 8px; }
+    .day-header { display:flex; align-items:center; gap:8px; margin: 0 0 4px 0; }
+    .day-header h3 { margin:0; }
+    .date-pill {
+      display:inline-block; min-width: 28px; padding: 2px 8px; border-radius: 999px;
+      background: rgba(255,255,255,0.15); font-weight: 700; text-align:center;
+    }
+    .today .date-pill { background: rgba(0, 180, 255, 0.35); }
+    .calendar-container ul { margin: 4px 0 0 0; padding-left: 18px; }
+    .calendar-container li { margin: 2px 0; }
+  </style>
 </head>
 <body>
 
@@ -18,7 +40,10 @@
 <div class="dashboard-container">
   <!-- Left Column -->
   <div class="left-section">
-    <h2>Upcoming Events</h2>
+    <div class="calendar-header">
+      <h2>Upcoming Events</h2>
+      <div id="calendarMonth" class="calendar-month"></div>
+    </div>
     <div class="calendar-container" id="calendarEvents">
       <p>Loading events...</p>
     </div>
@@ -48,28 +73,30 @@
   </div>
 </div>
 
-<!-- ===== Helper: time formatting + reformat all event times ===== -->
+<!-- ===== Time helpers (12/24h) ===== -->
 <script>
-  window.USE_24H = false; // will be set via fetch + live WS
+  // global flag; updated from server + via WS
+  window.USE_24H = false;
 
   function formatTimeString(hhmm) {
-    if (!hhmm || !/^\d{1,2}:\d{2}$/.test(String(hhmm))) return '';
-    const [hStr, mStr] = String(hhmm).split(':');
-    let h = parseInt(hStr, 10);
-    const mm = (mStr || '00').padStart(2,'0');
+    if (!hhmm || hhmm === 'All day') return hhmm || '';
+    const parts = hhmm.split(':');
+    if (parts.length < 2) return hhmm; // defensive
+    let h = parseInt(parts[0], 10);
+    const mm = (parts[1] || '00').padStart(2,'0');
 
     if (window.USE_24H) {
-      return `${String(isNaN(h) ? 0 : h).padStart(2,'0')}:${mm}`;
+      return `${String(h).padStart(2,'0')}:${mm}`;
     } else {
       const ampm = h >= 12 ? 'PM' : 'AM';
       h = h % 12 || 12;
-      return `${String(isNaN(h) ? 12 : h).padStart(2,'0')}:${mm} ${ampm}`;
+      return `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
     }
   }
 
   function reformatAllEventTimes() {
     document.querySelectorAll('[data-time-raw]').forEach(el => {
-      const raw = el.getAttribute('data-time-raw'); // "HH:MM"
+      const raw = el.getAttribute('data-time-raw'); // "HH:MM" or "All day"
       el.textContent = formatTimeString(raw);
     });
   }
@@ -78,7 +105,7 @@
 <!-- ===== WEBSOCKETS ===== -->
 <script>
   function startMirrorWebsockets() {
-    // Message WebSocket
+    // Message WS
     const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
     mirrorSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -90,7 +117,7 @@
       }
     };
 
-    // Calendar WebSocket (live add)
+    // Calendar WS (live add)
     const calendarSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
     calendarSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -99,9 +126,10 @@
 
       const d = new Date(`${ev.event_date}T00:00:00`);
       const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
-
       const list = document.getElementById(`list-${dayName}`);
+
       if (!list) {
+        // initial structure not present yet: refetch the whole week
         fetch('/Calendar/upcoming_events/')
           .then(r => r.json())
           .then(j => displayCalendarEvents(j.Week))
@@ -109,18 +137,21 @@
         return;
       }
 
+      // remove placeholder "No events scheduled"
       const placeholder = list.querySelector('li[data-placeholder="true"]');
       if (placeholder) placeholder.remove();
 
       const li = document.createElement('li');
-      const timeHTML = ev.event_time
-        ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>`
-        : '';
+      const isAllDay = ev.event_time === 'All day';
+      const timeHTML = isAllDay
+        ? `<span data-time-raw="All day">All day</span>`
+        : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
+
       li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
       list.appendChild(li);
     };
 
-    // Stocks WebSocket
+    // Stocks WS
     const stocks = {};
     const stocksSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/Stocks/");
     stocksSocket.onmessage = (event) => {
@@ -153,7 +184,7 @@
       priceDiv.innerHTML = `$${stock.price.toFixed(2)} <span class="${changeClass}">${stock.price > stock.previousPrice ? '▲' : '▼'}</span>`;
     }
 
-    // Settings WebSocket (live time-pref)
+    // Settings WS (live time-format push)
     (function(){
       const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
       const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
@@ -224,18 +255,45 @@
       .catch(error => console.error('Error fetching calendar events:', error));
   }
 
+  // Fixed week (Mon→Sun), show month title, show day-of-month pill, highlight today
   function displayCalendarEvents(events) {
     const calendarDiv = document.getElementById('calendarEvents');
+    const monthEl = document.getElementById('calendarMonth');
     calendarDiv.innerHTML = '';
 
-    for (const [day, dayEvents] of Object.entries(events)) {
-      const listId = `list-${day}`;
+    const BASE = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const today = new Date();
+    const todayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+    const monthName = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    if (monthEl) monthEl.textContent = monthName;
+
+    // Build a map for the "next 7 days" to know the actual date numbers for each weekday in the server payload.
+    const dayToDate = {}; // { "Monday": Date, ... } for the upcoming 7 days window
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+      const dn = d.toLocaleDateString('en-US', { weekday: 'long' });
+      // Only set once (first occurrence in next 7 days)
+      if (!(dn in dayToDate)) dayToDate[dn] = d;
+    }
+
+    BASE.forEach(day => {
       const section = document.createElement('div');
-      section.className = 'day-section';
-      section.innerHTML = `<h3>${day}</h3><ul id="${listId}"></ul>`;
+      section.className = 'day-section' + (day === todayName ? ' today' : '');
+
+      const d = dayToDate[day];
+      const dayNum = d ? d.getDate() : '';
+
+      section.innerHTML = `
+        <div class="day-header">
+          <h3>${day}</h3>
+          <span class="date-pill">${dayNum || '—'}</span>
+        </div>
+        <ul id="list-${day}"></ul>
+      `;
       calendarDiv.appendChild(section);
 
       const ul = section.querySelector('ul');
+      const dayEvents = events[day] || ['No events scheduled'];
 
       if (!dayEvents.length || (dayEvents.length === 1 && typeof dayEvents[0] === 'string')) {
         const li = document.createElement('li');
@@ -245,14 +303,15 @@
       } else {
         dayEvents.forEach(ev => {
           const li = document.createElement('li');
-          const timeHTML = ev.event_time
-            ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>`
-            : '';
+          const isAllDay = ev.event_time === 'All day';
+          const timeHTML = isAllDay
+            ? `<span data-time-raw="All day">All day</span>`
+            : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
           li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
           ul.appendChild(li);
         });
       }
-    }
+    });
   }
 
   function fetchWeather() {
@@ -278,7 +337,7 @@
   }
 </script>
 
-<!-- ===== Spotify Now Playing ===== -->
+<!-- ===== Spotify (unchanged) ===== -->
 <script>
   function renderSpotify(state){
     const t = (state && state.track) || {};
@@ -290,10 +349,8 @@
     artist.textContent = (t.artists || []).join(', ') || '';
     if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
   }
-
   fetch('/spotify/state/', {credentials:'include'})
     .then(r=>r.json()).then(renderSpotify).catch(()=>{});
-
   (function(){
     const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
     const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
