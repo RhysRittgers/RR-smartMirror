@@ -1,5 +1,3 @@
-# Calendar/views.py
-from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -7,32 +5,39 @@ from django.utils import timezone
 from datetime import timedelta, datetime
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+
 from .models import CalendarEvent
 
 
 @login_required
 def upcoming_events(request):
-    # Use local date (respects TIME_ZONE) so "today" doesn't slip due to UTC.
-    today = timezone.localdate()
-    next_week = today + timedelta(days=7)
+    """
+    Return events for the current week (Mon→Sun) in the project's TIME_ZONE.
+    Frontend renders a fixed-week grid and expects all days of this week,
+    not just 'today → +7'.
+    """
+    # Local date in settings.TIME_ZONE
+    today_local = timezone.localtime().date()          # respects TIME_ZONE
+    # Monday=0 … Sunday=6
+    week_start = today_local - timedelta(days=today_local.weekday())
+    week_end   = week_start + timedelta(days=6)
 
-    events = CalendarEvent.objects.filter(
-        event_date__range=[today, next_week],
-        user=request.user
+    qs = (
+        CalendarEvent.objects
+        .filter(user=request.user, event_date__range=[week_start, week_end])
+        .order_by('event_date', 'event_time')
     )
 
-    event_dict = {}
-    for event in events:
-        event_day = event.event_date.strftime("%A")
-        event_dict.setdefault(event_day, []).append(event.as_dict())
+    # Build dict for the fixed week
+    week_labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    week_data = {label: [] for label in week_labels}
 
-    # Build 7-day rolling window starting from 'today'
-    week_data = {}
-    for i in range(7):
-        day = today + timedelta(days=i)
-        weekday_name = day.strftime("%A")
-        week_data[weekday_name] = event_dict.get(weekday_name, ["No events scheduled"])
+    for ev in qs:
+        day_name = ev.event_date.strftime('%A')
+        if day_name in week_data:
+            week_data[day_name].append(ev.as_dict())
 
+    # Frontend shows a placeholder when the list is empty, so leave [] for empty days
     return JsonResponse({"Week": week_data})
 
 
@@ -56,7 +61,7 @@ def add_event(request):
     except ValueError as e:
         return HttpResponse(f"Invalid date/time format: {e}", status=400)
 
-    # Save to DB
+    # Save
     event = CalendarEvent.objects.create(
         user=request.user,
         event_name=name,
@@ -65,14 +70,11 @@ def add_event(request):
         event_description=desc
     )
 
-    # Broadcast to all mirrors
+    # Broadcast live to mirrors
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "mirror_calendar",
-        {
-            "type": "calendar_event",
-            "event": event.as_dict(),
-        }
+        {"type": "calendar_event", "event": event.as_dict()}
     )
 
     return JsonResponse({"status": "Event saved and broadcasted!"})
