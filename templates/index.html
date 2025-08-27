@@ -6,10 +6,16 @@
   <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
   <meta charset="utf-8">
   <style>
-    #sp-box { margin-top: 8px; display:flex; gap:12px; align-items:flex-start; }
-    #sp-img { width:96px; height:96px; border-radius:10px; display:none; object-fit:cover; }
-    #sp-title { font-weight:700; }
-    #sp-artist { opacity:0.8; }
+    /* calendar cosmetics */
+    .calendar-month { font-size: .95rem; opacity:.8; letter-spacing:.5px; margin: -6px 0 8px 0; }
+    .day-section { margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.08); }
+    .day-section.today { background:rgba(255,255,255,0.06); border-radius:8px; padding:6px 8px; }
+    .day-header { display:flex; align-items:center; gap:8px; margin:0 0 4px 0; }
+    .day-header h3 { margin:0; }
+    .date-pill { display:inline-block; min-width:28px; padding:2px 8px; border-radius:999px; background:rgba(255,255,255,0.15); font-weight:700; text-align:center; }
+    .today .date-pill { background:rgba(0,180,255,.35); }
+    .calendar-container ul { margin:4px 0 0 0; padding-left:18px; }
+    .calendar-container li { margin:2px 0; }
   </style>
 </head>
 <body>
@@ -25,6 +31,7 @@
   <!-- Left Column -->
   <div class="left-section">
     <h2>Upcoming Events</h2>
+    <div id="calendarMonth" class="calendar-month"></div>
     <div class="calendar-container" id="calendarEvents">
       <p>Loading events...</p>
     </div>
@@ -34,37 +41,32 @@
   </div>
 
   <!-- Center Column -->
-  <div id="mirror-message" class="message-container">
-    Loading message...
-  </div>
+  <div id="mirror-message" class="message-container">Loading message...</div>
 
   <!-- Right Column -->
   <div class="right-section">
     <h2>🌤 Weather</h2>
-    <div class="weather-container" id="weatherData">
-      <p>Loading weather...</p>
-    </div>
+    <div class="weather-container" id="weatherData"><p>Loading weather...</p></div>
 
     <h2>🎵 Now Playing</h2>
     <div id="sp-box">
-      <img id="sp-img">
-      <div>
-        <div id="sp-title"></div>
-        <div id="sp-artist"></div>
-      </div>
+      <img id="sp-img" style="max-width:160px;border-radius:10px;display:none">
+      <div id="sp-title" style="margin-top:8px;font-weight:bold;"></div>
+      <div id="sp-artist" style="opacity:0.8;"></div>
     </div>
   </div>
 </div>
 
+<!-- ===== Time helpers (12/24h) ===== -->
 <script>
-  // ===== GLOBALS / HELPERS =====
   window.USE_24H = false;
 
   function formatTimeString(hhmm) {
-    if (!hhmm) return '';
-    const [hStr, mStr] = (hhmm || '').split(':');
-    let h = parseInt(hStr || '0', 10);
-    const mm = String(mStr || '00').padStart(2,'0');
+    if (!hhmm || hhmm === 'All day') return hhmm || '';
+    const parts = hhmm.split(':');
+    if (parts.length < 2) return hhmm;
+    let h = parseInt(parts[0], 10);
+    const mm = (parts[1] || '00').padStart(2,'0');
     if (window.USE_24H) return `${String(h).padStart(2,'0')}:${mm}`;
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12 || 12;
@@ -73,9 +75,142 @@
 
   function reformatAllEventTimes() {
     document.querySelectorAll('[data-time-raw]').forEach(el => {
-      const raw = el.getAttribute('data-time-raw');
-      el.textContent = formatTimeString(raw);
+      el.textContent = formatTimeString(el.getAttribute('data-time-raw'));
     });
+  }
+</script>
+
+<!-- ===== WEBSOCKETS ===== -->
+<script>
+  // helpers for week math
+  function getWeekStart() {
+    const now = new Date();               // local time
+    const js = now.getDay();              // 0=Sun..6=Sat
+    const offset = (js + 6) % 7;          // 0=Mon..6=Sun
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
+  }
+  function ymd(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function startMirrorWebsockets() {
+    // Message WS
+    const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
+    mirrorSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const msgEl = document.getElementById("mirror-message");
+      if (msgEl) {
+        msgEl.innerText = data.message;
+        msgEl.classList.add("flash");
+        setTimeout(() => msgEl.classList.remove("flash"), 500);
+      }
+    };
+
+    // Calendar WS (live add, but only if event is in THIS fixed week)
+    const calendarSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
+    calendarSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const ev = data.event;
+      if (!ev) return;
+
+      const evDate = new Date(`${ev.event_date}T00:00:00`);
+      const wkStart = getWeekStart();
+      const wkEnd = new Date(wkStart); wkEnd.setDate(wkStart.getDate()+7);
+      if (evDate < wkStart || evDate >= wkEnd) return; // ignore out-of-week events
+
+      const dayName = evDate.toLocaleDateString('en-US', { weekday: 'long' });
+      const list = document.getElementById(`list-${dayName}`);
+      if (!list) { fetch('/Calendar/upcoming_events/').then(r=>r.json()).then(j=>displayCalendarEvents(j.Week)); return; }
+
+      const placeholder = list.querySelector('li[data-placeholder="true"]');
+      if (placeholder) placeholder.remove();
+
+      const li = document.createElement('li');
+      const isAllDay = ev.event_time === 'All day';
+      const timeHTML = isAllDay
+        ? `<span data-time-raw="All day">All day</span>`
+        : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
+      li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
+      list.appendChild(li);
+    };
+
+    // Stocks WS
+    const stocks = {};
+    const stocksSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/Stocks/");
+    stocksSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'trade' && data.data) {
+        data.data.forEach(trade => {
+          const symbol = trade.s, price = trade.p;
+          stocks[symbol] = stocks[symbol] || { price, previousPrice: price };
+          stocks[symbol].previousPrice = stocks[symbol].price;
+          stocks[symbol].price = price;
+          updateStockDisplay(symbol);
+        });
+      }
+    };
+    function updateStockDisplay(symbol) {
+      const grid = document.getElementById('stocksGrid');
+      let stockDiv = document.getElementById(`stock-${symbol}`);
+      if (!stockDiv) {
+        stockDiv = document.createElement('div');
+        stockDiv.id = `stock-${symbol}`;
+        stockDiv.classList.add('stock');
+        stockDiv.innerHTML = `<div class="stock-name">${symbol}</div><div class="stock-price" id="price-${symbol}"></div>`;
+        grid.appendChild(stockDiv);
+      }
+      const priceDiv = document.getElementById(`price-${symbol}`);
+      const stock = stocks[symbol];
+      const up = stock.price > stock.previousPrice;
+      priceDiv.innerHTML = `$${stock.price.toFixed(2)} <span class="${up?'up':'down'}">${up?'▲':'▼'}</span>`;
+    }
+
+    // Settings WS (live time-format push)
+    (function(){
+      const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
+      const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'time_pref') {
+            window.USE_24H = !!msg.use_24h;
+            if (typeof updateClock === 'function') updateClock();
+            reformatAllEventTimes();
+          }
+        } catch (_) {}
+      };
+    })();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    startMirrorWebsockets();
+    loadTimePrefForMirror().then(() => {
+      updateClock();
+      setInterval(updateClock, 1000);
+    });
+    fetchCalendarEvents();
+    fetchWeather();
+  });
+</script>
+
+{% else %}
+<div id="waiting-screen" style="text-align:center; margin-top: 20vh;">
+  <h1>Please log in on your phone to activate the mirror.</h1>
+  <p>Visit <strong>https://rr-smartmirror.onrender.com</strong> to log in.</p>
+</div>
+{% endif %}
+
+<!-- ===== CLOCK + WEATHER + CALENDAR FETCH ===== -->
+<script>
+  async function loadTimePrefForMirror() {
+    try {
+      const r = await fetch('/auth/settings/time-format/', { credentials:'include', cache:'no-store' });
+      const j = await r.json();
+      window.USE_24H = !!j.use_24h;
+    } catch(e) { window.USE_24H = false; }
   }
 
   function updateClock() {
@@ -83,7 +218,8 @@
     const now = new Date();
     const mm = String(now.getMinutes()).padStart(2,'0');
     if (window.USE_24H) {
-      el.textContent = `${String(now.getHours()).padStart(2,'0')}:${mm}`;
+      const hh = String(now.getHours()).padStart(2,'0');
+      el.textContent = `${hh}:${mm}`;
     } else {
       let h = now.getHours();
       const ampm = h >= 12 ? 'PM' : 'AM';
@@ -92,16 +228,92 @@
     }
   }
 
-  async function loadTimePrefForMirror() {
-    try {
-      const r = await fetch('/auth/settings/time-format/', { credentials:'include', cache:'no-store' });
-      const j = await r.json();
-      window.USE_24H = !!j.use_24h;
-    } catch(e) {
-      window.USE_24H = false;
-    }
+  function fetchCalendarEvents() {
+    fetch('/Calendar/upcoming_events/')
+      .then(r => r.json())
+      .then(j => displayCalendarEvents(j.Week))
+      .catch(err => console.error('Error fetching calendar events:', err));
   }
 
+  // Fixed week (Mon→Sun of the current week). Filter events to this week only.
+  function displayCalendarEvents(events) {
+    const calendarDiv = document.getElementById('calendarEvents');
+    const monthEl = document.getElementById('calendarMonth');
+    calendarDiv.innerHTML = '';
+
+    const BASE = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+    const weekStart = getWeekStart();                 // Monday of this week
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+7);
+
+    // Month label under the title (use today's month/year)
+    const today = new Date();
+    monthEl.textContent = today.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+
+    const todayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+
+    BASE.forEach((day, i) => {
+      const d = new Date(weekStart); d.setDate(weekStart.getDate()+i);
+      const section = document.createElement('div');
+      section.className = 'day-section' + (day === todayName ? ' today' : '');
+
+      section.innerHTML = `
+        <div class="day-header">
+          <h3>${day}</h3>
+          <span class="date-pill">${d.getDate()}</span>
+        </div>
+        <ul id="list-${day}"></ul>
+      `;
+      calendarDiv.appendChild(section);
+
+      const ul = section.querySelector('ul');
+      const raw = events[day] || [];
+
+      // Keep only events whose event_date matches this day's date (YYYY-MM-DD)
+      const wantYMD = ymd(d);
+      const filtered = raw.filter(ev => typeof ev === 'object' && ev.event_date === wantYMD);
+
+      if (!filtered.length) {
+        const li = document.createElement('li');
+        li.textContent = 'No events scheduled';
+        li.setAttribute('data-placeholder', 'true');
+        ul.appendChild(li);
+      } else {
+        filtered.forEach(ev => {
+          const li = document.createElement('li');
+          const isAllDay = ev.event_time === 'All day';
+          const timeHTML = isAllDay
+            ? `<span data-time-raw="All day">All day</span>`
+            : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
+          li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
+          ul.appendChild(li);
+        });
+      }
+    });
+  }
+
+  function fetchWeather() {
+    fetch('/Weather/user_weather/')
+      .then(r => r.json())
+      .then(displayWeather)
+      .catch(err => console.error('Error fetching weather data:', err));
+  }
+
+  function displayWeather(data) {
+    const weatherDiv = document.getElementById('weatherData');
+    if (data.error) { weatherDiv.innerHTML = `<p>${data.error}</p>`; return; }
+    let weatherHTML = `<h3>${data.location}</h3><p>🌡 Temperature: ${data.temperature}°${data.unit[0]}</p>`;
+    weatherHTML += data.humidity !== "Hidden" ? `<p>💧 Humidity: ${data.humidity}%</p>` : "";
+    weatherHTML += data.forcast !== "Hidden" ? `<p>🌤 Forecast: ${data.forcast}</p>` : "";
+    weatherHTML += data.sunrise_sunset !== "Hidden"
+      ? `<p>Sunrise: ${new Date(data.sunrise_sunset.sunrise * 1000).toLocaleTimeString()}</p>
+         <p>Sunset: ${new Date(data.sunrise_sunset.sunset * 1000).toLocaleTimeString()}</p>` : "";
+    weatherDiv.innerHTML = weatherHTML;
+  }
+</script>
+
+<!-- ===== Spotify Now Playing ===== -->
+<script>
   function renderSpotify(state){
     const t = (state && state.track) || {};
     const img = document.getElementById('sp-img');
@@ -111,188 +323,15 @@
     artist.textContent = (t.artists || []).join(', ') || '';
     if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
   }
-
-  // Resilient WS
-  function connectWS(path, {onOpen, onMessage}, maxDelay=15000) {
-    let delay = 1000;
-    const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-    function open() {
-      const ws = new WebSocket(`${scheme}://${location.host}${path}`);
-      ws.onopen = () => { delay = 1000; onOpen && onOpen(ws); };
-      ws.onmessage = (e) => { onMessage && onMessage(e); };
-      ws.onclose = () => retry();
-      ws.onerror = () => { try { ws.close(); } catch(_){} };
-    }
-    function retry() { setTimeout(open, delay); delay = Math.min(delay*2, maxDelay); }
-    open();
-  }
-
-  // Fetchers
-  function fetchCalendarEvents() {
-    fetch('/Calendar/upcoming_events/')
-      .then(r => r.json())
-      .then(data => displayCalendarEvents(data.Week))
-      .catch(() => {});
-  }
-  function displayCalendarEvents(events) {
-    const calendarDiv = document.getElementById('calendarEvents');
-    calendarDiv.innerHTML = '';
-    for (const [day, dayEvents] of Object.entries(events)) {
-      const listId = `list-${day}`;
-      const section = document.createElement('div');
-      section.className = 'day-section';
-      section.innerHTML = `<h3>${day}</h3><ul id="${listId}"></ul>`;
-      calendarDiv.appendChild(section);
-      const ul = section.querySelector('ul');
-      if (!dayEvents.length || (dayEvents.length === 1 && typeof dayEvents[0] === 'string')) {
-        const li = document.createElement('li');
-        li.textContent = 'No events scheduled';
-        li.setAttribute('data-placeholder', 'true');
-        ul.appendChild(li);
-      } else {
-        dayEvents.forEach(ev => {
-          const li = document.createElement('li');
-          const timeHTML = ev.event_time
-            ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>`
-            : '';
-          li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
-          ul.appendChild(li);
-        });
-      }
-    }
-  }
-
-  function fetchWeather() {
-    fetch('/Weather/user_weather/')
-      .then(r => r.json())
-      .then(displayWeather)
-      .catch(() => {});
-  }
-  function displayWeather(data) {
-    const weatherDiv = document.getElementById('weatherData');
-    if (data.error) { weatherDiv.innerHTML = `<p>${data.error}</p>`; return; }
-    let html = `<h3>${data.location}</h3><p>🌡 Temperature: ${data.temperature}°${data.unit[0]}</p>`;
-    html += data.humidity !== "Hidden" ? `<p>💧 Humidity: ${data.humidity}%</p>` : "";
-    html += data.forcast !== "Hidden" ? `<p>🌤 Forecast: ${data.forcast}</p>` : "";
-    html += data.sunrise_sunset !== "Hidden"
-      ? `<p>Sunrise: ${new Date(data.sunrise_sunset.sunrise * 1000).toLocaleTimeString()}</p>
-         <p>Sunset: ${new Date(data.sunrise_sunset.sunset * 1000).toLocaleTimeString()}</p>` : "";
-    weatherDiv.innerHTML = html;
-  }
-
-  // Start live sockets (when authed)
-  function startAuthedSockets() {
-    connectWS('/ws/mirror', {
-      onMessage: e => {
-        const data = JSON.parse(e.data);
-        const msgEl = document.getElementById("mirror-message");
-        if (!msgEl) return;
-        msgEl.innerText = data.message;
-        msgEl.classList.add("flash");
-        setTimeout(() => msgEl.classList.remove("flash"), 500);
-      }
-    });
-
-    connectWS('/ws/calendar', {
-      onMessage: e => {
-        const data = JSON.parse(e.data);
-        const ev = data.event; if (!ev) return;
-        const d = new Date(`${ev.event_date}T00:00:00`);
-        const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
-        const list = document.getElementById(`list-${dayName}`);
-        if (!list) { fetchCalendarEvents(); return; }
-        const placeholder = list.querySelector('li[data-placeholder="true"]');
-        if (placeholder) placeholder.remove();
-        const li = document.createElement('li');
-        const timeHTML = ev.event_time
-          ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>`
-          : '';
-        li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
-        list.appendChild(li);
-      }
-    });
-
-    connectWS('/ws/settings/', {
-      onOpen: () => {
-        loadTimePrefForMirror().then(() => {
-          updateClock();
-          reformatAllEventTimes();
-        });
-      },
-      onMessage: e => {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.type === 'time_pref') {
-            window.USE_24H = !!msg.use_24h;
-            updateClock();
-            reformatAllEventTimes();
-          }
-        } catch (_) {}
-      }
-    });
-
-    connectWS('/ws/spotify/', {
-      onOpen: () => {
-        fetch('/spotify/state/', {credentials:'include'})
-          .then(r=>r.json()).then(renderSpotify).catch(()=>{});
-      },
-      onMessage: e => {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.type === 'spotify_state') renderSpotify(msg.data);
-        } catch (_){}
-      }
-    });
-  }
-
-  // Boot (authed branch)
-  document.addEventListener("DOMContentLoaded", async () => {
-    await loadTimePrefForMirror();
-    updateClock();
-    setInterval(updateClock, 1000);
-    fetchCalendarEvents();
-    fetchWeather();
-    fetch('/spotify/state/', {credentials:'include'})
-      .then(r=>r.json()).then(renderSpotify).catch(()=>{});
-    startAuthedSockets();
-  });
-</script>
-
-{% else %}
-<!-- Not authenticated: wait for remote to push a token, then POST it from the browser -->
-<div id="waiting-screen" style="text-align:center; margin-top: 20vh;">
-  <h1>Please log in on your phone to activate the mirror.</h1>
-  <p>Visit <strong>https://rr-smartmirror.onrender.com</strong> to log in.</p>
-</div>
-
-<script>
+  fetch('/spotify/state/', {credentials:'include'}).then(r=>r.json()).then(renderSpotify).catch(()=>{});
   (function(){
     const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-    let delay = 1000;
-    function open() {
-      const ws = new WebSocket(`${scheme}://${location.host}/ws/mirror-login/`);
-      ws.onmessage = async (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.type === 'login_success' && msg.token) {
-            await fetch('/auth/mirror-auth/', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: new URLSearchParams({ token: msg.token })
-            });
-            location.reload();
-          }
-        } catch(_) {}
-      };
-      ws.onclose = () => retry();
-      ws.onerror = () => { try { ws.close(); } catch(_){} };
-    }
-    function retry() { setTimeout(open, delay); delay = Math.min(delay*2, 15000); }
-    open();
-  })();
+    const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
+    ws.onmessage = (e)=>{ try{
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'spotify_state') renderSpotify(msg.data);
+    }catch(_){}};})();
 </script>
-{% endif %}
 
 </body>
 </html>
