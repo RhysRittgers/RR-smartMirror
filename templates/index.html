@@ -6,11 +6,10 @@
   <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
   <meta charset="utf-8">
   <style>
-    /* Tiny polish for now playing */
     #sp-box { margin-top: 8px; display:flex; gap:12px; align-items:flex-start; }
-    #sp-meta { display:flex; flex-direction:column; justify-content:center; }
-    #sp-title { font-weight: 700; }
-    #sp-artist { opacity: 0.8; }
+    #sp-img { width:96px; height:96px; border-radius:10px; display:none; object-fit:cover; }
+    #sp-title { font-weight:700; }
+    #sp-artist { opacity:0.8; }
   </style>
 </head>
 <body>
@@ -48,7 +47,7 @@
 
     <h2>🎵 Now Playing</h2>
     <div id="sp-box">
-      <img id="sp-img" style="width:96px;height:96px;border-radius:10px;display:none;object-fit:cover">
+      <img id="sp-img">
       <div id="sp-meta">
         <div id="sp-title"></div>
         <div id="sp-artist"></div>
@@ -57,16 +56,15 @@
   </div>
 </div>
 
-<!-- ===== Helpers for time formatting ===== -->
 <script>
-  window.USE_24H = false; // set from server/WS on load
+  // ========== Helpers ==========
+  window.USE_24H = false;
 
   function formatTimeString(hhmm) {
     if (!hhmm) return '';
-    const [hStr, mStr] = hhmm.split(':');
-    let h = parseInt(hStr, 10);
-    const mm = (mStr || '00').padStart(2,'0');
-
+    const [hStr, mStr] = (hhmm || '').split(':');
+    let h = parseInt(hStr || '0', 10);
+    const mm = String(mStr || '00').padStart(2,'0');
     if (window.USE_24H) {
       return `${String(h).padStart(2,'0')}:${mm}`;
     } else {
@@ -82,153 +80,11 @@
       el.textContent = formatTimeString(raw);
     });
   }
-</script>
-
-<!-- ===== WEBSOCKETS ===== -->
-<script>
-  function startMirrorWebsockets() {
-    // Message WS
-    const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
-    mirrorSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      const msgEl = document.getElementById("mirror-message");
-      if (!msgEl) return;
-      msgEl.innerText = data.message;
-      msgEl.classList.add("flash");
-      setTimeout(() => msgEl.classList.remove("flash"), 500);
-    };
-
-    // Calendar WS (live add)
-    const calendarSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
-    calendarSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      const ev = data.event;
-      if (!ev) return;
-
-      const d = new Date(`${ev.event_date}T00:00:00`);
-      const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
-
-      const list = document.getElementById(`list-${dayName}`);
-      if (!list) {
-        fetch('/Calendar/upcoming_events/')
-          .then(r => r.json())
-          .then(j => displayCalendarEvents(j.Week))
-          .catch(() => {});
-        return;
-      }
-
-      const placeholder = list.querySelector('li[data-placeholder="true"]');
-      if (placeholder) placeholder.remove();
-
-      const li = document.createElement('li');
-      const timeHTML = ev.event_time
-        ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>`
-        : '';
-      li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
-      list.appendChild(li);
-    };
-
-    // Stocks WS
-    const stocks = {};
-    const stocksSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/Stocks/");
-    stocksSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'trade' && data.data) {
-        data.data.forEach(trade => {
-          const symbol = trade.s;
-          const price = trade.p;
-          stocks[symbol] = stocks[symbol] || { price: price, previousPrice: price };
-          stocks[symbol].previousPrice = stocks[symbol].price;
-          stocks[symbol].price = price;
-          updateStockDisplay(symbol);
-        });
-      }
-    };
-
-    function updateStockDisplay(symbol) {
-      const grid = document.getElementById('stocksGrid');
-      let stockDiv = document.getElementById(`stock-${symbol}`);
-      if (!stockDiv) {
-        stockDiv = document.createElement('div');
-        stockDiv.id = `stock-${symbol}`;
-        stockDiv.classList.add('stock');
-        stockDiv.innerHTML = `<div class="stock-name">${symbol}</div><div class="stock-price" id="price-${symbol}"></div>`;
-        grid.appendChild(stockDiv);
-      }
-      const priceDiv = document.getElementById(`price-${symbol}`);
-      const stock = stocks[symbol];
-      const changeClass = stock.price > stock.previousPrice ? 'up' : 'down';
-      priceDiv.innerHTML = `$${stock.price.toFixed(2)} <span class="${changeClass}">${stock.price > stock.previousPrice ? '▲' : '▼'}</span>`;
-    }
-
-    // Settings WS (live time-pref push)
-    (function(){
-      const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-      const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
-      ws.onmessage = (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.type === 'time_pref') {
-            window.USE_24H = !!msg.use_24h;
-            if (typeof updateClock === 'function') updateClock();
-            reformatAllEventTimes();
-          }
-        } catch (_) {}
-      };
-    })();
-
-    // Spotify WS (live now-playing)
-    (function(){
-      const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-      const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
-      ws.onmessage = (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.type === 'spotify_state') renderSpotify(msg.data);
-        } catch (_){}
-      };
-    })();
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    startMirrorWebsockets();
-    loadTimePrefForMirror().then(() => {
-      updateClock();
-      setInterval(updateClock, 1000);
-    });
-    fetchCalendarEvents();
-    fetchWeather();
-
-    // pull initial spotify state once
-    fetch('/spotify/state/', {credentials:'include'})
-      .then(r=>r.json()).then(renderSpotify).catch(()=>{});
-  });
-</script>
-
-{% else %}
-<div id="waiting-screen" style="text-align:center; margin-top: 20vh;">
-  <h1>Please log in on your phone to activate the mirror.</h1>
-  <p>Visit <strong>https://rr-smartmirror.onrender.com</strong> to log in.</p>
-</div>
-{% endif %}
-
-<!-- ===== CLOCK + WEATHER + CALENDAR FETCH ===== -->
-<script>
-  async function loadTimePrefForMirror() {
-    try {
-      const r = await fetch('/auth/settings/time-format/', { credentials:'include', cache:'no-store' });
-      const j = await r.json();
-      window.USE_24H = !!j.use_24h;
-    } catch(e) {
-      window.USE_24H = false;
-    }
-  }
 
   function updateClock() {
     const el = document.getElementById("digitalClock");
     const now = new Date();
     const mm = String(now.getMinutes()).padStart(2,'0');
-
     if (window.USE_24H) {
       const hh = String(now.getHours()).padStart(2,'0');
       el.textContent = `${hh}:${mm}`;
@@ -241,27 +97,73 @@
     }
   }
 
+  async function loadTimePrefForMirror() {
+    try {
+      const r = await fetch('/auth/settings/time-format/', { credentials:'include', cache:'no-store' });
+      const j = await r.json();
+      window.USE_24H = !!j.use_24h;
+    } catch(e) {
+      window.USE_24H = false;
+    }
+  }
+
+  function renderSpotify(state){
+    const t = (state && state.track) || {};
+    const img = document.getElementById('sp-img');
+    const title = document.getElementById('sp-title');
+    const artist = document.getElementById('sp-artist');
+
+    title.textContent = t.name || '—';
+    artist.textContent = (t.artists || []).join(', ') || '';
+    if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
+  }
+
+  // ========== Resilient WS helper ==========
+  function connectWS(path, {onOpen, onMessage, name}, maxDelay=15000) {
+    let delay = 1000;
+    const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
+    let ws;
+
+    function open() {
+      ws = new WebSocket(`${scheme}://${location.host}${path}`);
+      ws.onopen = () => {
+        // reset backoff
+        delay = 1000;
+        if (onOpen) onOpen(ws);
+      };
+      ws.onmessage = (e) => { if (onMessage) onMessage(e); };
+      ws.onclose = () => retry();
+      ws.onerror = () => { try { ws.close(); } catch(_){} };
+    }
+
+    function retry() {
+      setTimeout(open, delay);
+      delay = Math.min(delay * 2, maxDelay);
+    }
+
+    open();
+    return () => { try { ws && ws.close(); } catch(_){} };
+  }
+
+  // ========== Initial data fetchers ==========
   function fetchCalendarEvents() {
     fetch('/Calendar/upcoming_events/')
-      .then(response => response.json())
+      .then(r => r.json())
       .then(data => displayCalendarEvents(data.Week))
-      .catch(error => console.error('Error fetching calendar events:', error));
+      .catch(() => {});
   }
 
   function displayCalendarEvents(events) {
     const calendarDiv = document.getElementById('calendarEvents');
     calendarDiv.innerHTML = '';
-
     for (const [day, dayEvents] of Object.entries(events)) {
       const listId = `list-${day}`;
-
       const section = document.createElement('div');
       section.className = 'day-section';
       section.innerHTML = `<h3>${day}</h3><ul id="${listId}"></ul>`;
       calendarDiv.appendChild(section);
 
       const ul = section.querySelector('ul');
-
       if (!dayEvents.length || (dayEvents.length === 1 && typeof dayEvents[0] === 'string')) {
         const li = document.createElement('li');
         li.textContent = 'No events scheduled';
@@ -284,15 +186,12 @@
     fetch('/Weather/user_weather/')
       .then(response => response.json())
       .then(data => displayWeather(data))
-      .catch(error => console.error('Error fetching weather data:', error));
+      .catch(() => {});
   }
 
   function displayWeather(data) {
     const weatherDiv = document.getElementById('weatherData');
-    if (data.error) {
-      weatherDiv.innerHTML = `<p>${data.error}</p>`;
-      return;
-    }
+    if (data.error) { weatherDiv.innerHTML = `<p>${data.error}</p>`; return; }
     let weatherHTML = `<h3>${data.location}</h3><p>🌡 Temperature: ${data.temperature}°${data.unit[0]}</p>`;
     weatherHTML += data.humidity !== "Hidden" ? `<p>💧 Humidity: ${data.humidity}%</p>` : "";
     weatherHTML += data.forcast !== "Hidden" ? `<p>🌤 Forecast: ${data.forcast}</p>` : "";
@@ -301,21 +200,135 @@
          <p>Sunset: ${new Date(data.sunrise_sunset.sunset * 1000).toLocaleTimeString()}</p>` : "";
     weatherDiv.innerHTML = weatherHTML;
   }
-</script>
 
-<!-- ===== Spotify Now Playing render ===== -->
-<script>
-  function renderSpotify(state){
-    const t = (state && state.track) || {};
-    const img = document.getElementById('sp-img');
-    const title = document.getElementById('sp-title');
-    const artist = document.getElementById('sp-artist');
+  // ========== Live wiring ==========
+  function startMirrorWebsockets() {
+    // message
+    connectWS('/ws/mirror', {
+      name: 'mirror',
+      onMessage: e => {
+        const data = JSON.parse(e.data);
+        const msgEl = document.getElementById("mirror-message");
+        if (!msgEl) return;
+        msgEl.innerText = data.message;
+        msgEl.classList.add("flash");
+        setTimeout(() => msgEl.classList.remove("flash"), 500);
+      }
+    });
 
-    title.textContent = t.name || '—';
-    artist.textContent = (t.artists || []).join(', ') || '';
-    if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
+    // calendar live add
+    connectWS('/ws/calendar', {
+      name: 'calendar',
+      onMessage: e => {
+        const data = JSON.parse(e.data);
+        const ev = data.event;
+        if (!ev) return;
+
+        const d = new Date(`${ev.event_date}T00:00:00`);
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+
+        const list = document.getElementById(`list-${dayName}`);
+        if (!list) {
+          fetchCalendarEvents();
+          return;
+        }
+        const placeholder = list.querySelector('li[data-placeholder="true"]');
+        if (placeholder) placeholder.remove();
+
+        const li = document.createElement('li');
+        const timeHTML = ev.event_time
+          ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>`
+          : '';
+        li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
+        list.appendChild(li);
+      }
+    });
+
+    // settings (time pref)
+    connectWS('/ws/settings/', {
+      name: 'settings',
+      onOpen: () => {
+        // refresh current pref when (re)connected
+        loadTimePrefForMirror().then(() => {
+          updateClock();
+          reformatAllEventTimes();
+        });
+      },
+      onMessage: e => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'time_pref') {
+            window.USE_24H = !!msg.use_24h;
+            updateClock();
+            reformatAllEventTimes();
+          }
+        } catch (_) {}
+      }
+    });
+
+    // spotify now playing
+    connectWS('/ws/spotify/', {
+      name: 'spotify',
+      onOpen: () => {
+        // pull fresh state on connect
+        fetch('/spotify/state/', {credentials:'include'})
+          .then(r=>r.json()).then(renderSpotify).catch(()=>{});
+      },
+      onMessage: e => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'spotify_state') renderSpotify(msg.data);
+        } catch (_){}
+      }
+    });
+
+    // stocks
+    connectWS('/ws/Stocks/', {
+      name: 'stocks',
+      onMessage: e => {
+        const data = JSON.parse(e.data);
+        if (data.type !== 'trade' || !data.data) return;
+        const grid = document.getElementById('stocksGrid');
+        data.data.forEach(trade => {
+          const symbol = trade.s;
+          const price = trade.p;
+          let stockDiv = document.getElementById(`stock-${symbol}`);
+          if (!stockDiv) {
+            stockDiv = document.createElement('div');
+            stockDiv.id = `stock-${symbol}`;
+            stockDiv.classList.add('stock');
+            stockDiv.innerHTML = `<div class="stock-name">${symbol}</div><div class="stock-price" id="price-${symbol}"></div>`;
+            grid.appendChild(stockDiv);
+          }
+          const priceDiv = document.getElementById(`price-${symbol}`);
+          const prev = parseFloat(priceDiv.getAttribute('data-prev') || price);
+          const changeUp = price > prev;
+          priceDiv.setAttribute('data-prev', String(price));
+          priceDiv.innerHTML = `$${price.toFixed(2)} <span class="${changeUp ? 'up' : 'down'}">${changeUp ? '▲' : '▼'}</span>`;
+        });
+      }
+    });
   }
+
+  // boot
+  document.addEventListener("DOMContentLoaded", async () => {
+    startMirrorWebsockets();
+    await loadTimePrefForMirror();
+    updateClock();
+    setInterval(updateClock, 1000);
+    fetchCalendarEvents();
+    fetchWeather();
+    // initial spotify pull as a safety (also done on WS connect)
+    fetch('/spotify/state/', {credentials:'include'})
+      .then(r=>r.json()).then(renderSpotify).catch(()=>{});
+  });
 </script>
 
+{% else %}
+<div id="waiting-screen" style="text-align:center; margin-top: 20vh;">
+  <h1>Please log in on your phone to activate the mirror.</h1>
+  <p>Visit <strong>https://rr-smartmirror.onrender.com</strong> to log in.</p>
+</div>
+{% endif %}
 </body>
 </html>
