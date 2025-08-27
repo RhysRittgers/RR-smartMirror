@@ -1,5 +1,4 @@
-# Authentication/mirror_login_consumer.py
-
+# Authentication/consumers.py
 from channels.generic.websocket import AsyncWebsocketConsumer, AsyncJsonWebsocketConsumer
 import json
 import aiohttp
@@ -16,7 +15,6 @@ class MirrorLoginConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
 
-        #token login only
         if data.get("type") == "send_token_to_mirror":
             token = data.get("token")
 
@@ -26,29 +24,20 @@ class MirrorLoginConsumer(AsyncWebsocketConsumer):
                     data={"token": token}
                 ) as resp:
                     if resp.status == 200:
-                        print("Mirror authenticated successfully.")
                         await self.channel_layer.group_send(
                             self.group_name,
-                            {
-                                "type": "login_success",
-                                "username": "authed",
-                                "token": token
-                            }
+                            {"type": "login_success", "username": "authed", "token": token}
                         )
                     else:
-                        print(f"Mirror login failed. Status: {resp.status}")
-                        await self.send(text_data=json.dumps({
-                            "type": "login_failed"
-                        }))
+                        await self.send(text_data=json.dumps({"type": "login_failed"}))
 
-    #called when group_send sends { "type": "login_success" 
     async def login_success(self, event):
         await self.send(text_data=json.dumps({
             "type": "login_success",
-            "username": event['username'],
+            "username": event["username"],
             "token": event.get("token")
         }))
-        
+
 class SettingsConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         user = self.scope.get("user")
@@ -64,5 +53,3 @@ class SettingsConsumer(AsyncJsonWebsocketConsumer):
     # receives {"type": "time_pref", "use_24h": ...}
     async def time_pref(self, event):
         await self.send_json({"type": "time_pref", "use_24h": bool(event.get("use_24h"))})
-
-
