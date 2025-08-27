@@ -75,12 +75,17 @@
     </label>
     <small id="pref-save-status" class="muted"></small>
   </div>
-  <small class="muted">This preference controls how the mirror displays the clock.</small>
+  <small class="muted">This preference controls how the mirror displays the clock and event times.</small>
 </div>
 
 <button id="remoteLogoutBtn">Logout</button>
 
 <script>
+  // Ensure csrftoken cookie exists (harmless if already set)
+  (async () => {
+    try { await fetch("/auth/csrf/", { credentials: "include", cache: "no-store" }); } catch (e) {}
+  })();
+
   function getCookie(name){
     const v = document.cookie.split('; ').find(r=>r.startsWith(name+'='));
     return v ? decodeURIComponent(v.split('=')[1]) : '';
@@ -225,7 +230,7 @@
         cache: 'no-store',
         body
       });
-      const j = await r.json();
+      await r.json();
       prefStatus.textContent = 'Saved';
       setTimeout(()=> prefStatus.textContent = '', 1200);
     } catch (e) {

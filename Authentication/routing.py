@@ -1,7 +1,7 @@
-# Authentication/routing.py
-from django.urls import re_path
-from Authentication.consumers import MirrorLoginConsumer
+from django.urls import path
+from .mirror_login_consumer import MirrorLoginConsumer, SettingsConsumer
 
 websocket_urlpatterns = [
-    re_path(r"ws/mirror-login/$", MirrorLoginConsumer.as_asgi()),
+    path("ws/mirror-login/", MirrorLoginConsumer.as_asgi()),
+    path("ws/settings/", SettingsConsumer.as_asgi()),
 ]

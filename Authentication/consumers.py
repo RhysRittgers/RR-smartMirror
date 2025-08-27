@@ -1,6 +1,6 @@
 # Authentication/mirror_login_consumer.py
 
-from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer, AsyncJsonWebsocketConsumer
 import json
 import aiohttp
 
@@ -48,3 +48,21 @@ class MirrorLoginConsumer(AsyncWebsocketConsumer):
             "username": event['username'],
             "token": event.get("token")
         }))
+        
+class SettingsConsumer(AsyncJsonWebsocketConsumer):
+    async def connect(self):
+        user = self.scope.get("user")
+        if not user or user.is_anonymous:
+            await self.close()
+            return
+        await self.channel_layer.group_add("mirror_settings", self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, code):
+        await self.channel_layer.group_discard("mirror_settings", self.channel_name)
+
+    # receives {"type": "time_pref", "use_24h": ...}
+    async def time_pref(self, event):
+        await self.send_json({"type": "time_pref", "use_24h": bool(event.get("use_24h"))})
+
+
