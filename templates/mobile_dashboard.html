@@ -1,33 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mirror Controller</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 1.2rem;
-            margin: 10px;
-            cursor: pointer;
-        }
-        .settings-card {
-            margin-top: 24px;
-            padding: 16px;
-            border: 1px solid #e4e4e4;
-            border-radius: 8px;
-            background: #fafafa;
-        }
-        .row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        small.muted { color: #666; }
-    </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirror Controller</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    button { padding: 10px 20px; font-size: 1.2rem; margin: 10px; cursor: pointer; }
+    .settings-card { margin-top: 24px; padding: 16px; border: 1px solid #e4e4e4; border-radius: 8px; background: #fafafa; }
+    .row { display: flex; align-items: center; gap: 8px; }
+    small.muted { color: #666; }
+  </style>
 </head>
 <body>
 <h1>Smart Mirror Remote</h1>
@@ -35,34 +17,30 @@
 <!-- MESSAGE -->
 <h2>Update Mirror Message</h2>
 <form id="messageForm">
-    <input type="text" name="message" placeholder="New message" required>
-    <button type="submit">Send</button>
+  <input type="text" name="message" placeholder="New message" required>
+  <button type="submit">Send</button>
 </form>
 
 <!-- CALENDAR -->
 <h2>Add New Calendar Event</h2>
 <form id="calendarForm">
-    <input type="text" name="event_name" placeholder="Event Name" required><br>
-    <input type="date" name="event_date" required><br>
-    <input type="time" name="event_time"><br>
-    <textarea name="event_description" placeholder="Event Description (optional)"></textarea><br>
-    <button type="submit">Add Event</button>
+  <input type="text" name="event_name" placeholder="Event Name" required><br>
+  <input type="date" name="event_date" required><br>
+  <input type="time" name="event_time"><br>
+  <textarea name="event_description" placeholder="Event Description (optional)"></textarea><br>
+  <button type="submit">Add Event</button>
 </form>
 
 <!-- SPOTIFY CONTROL -->
 <h2>Spotify</h2>
-<p>
-  <a href="/spotify/login/">Connect Spotify</a>
-</p>
+<p><a href="/spotify/login/">Connect Spotify</a></p>
 <div>
   <button id="sp-prev">Prev</button>
   <button id="sp-play">Play</button>
   <button id="sp-pause">Pause</button>
   <button id="sp-next">Next</button>
 </div>
-<div style="margin-top:8px;">
-  Volume: <input id="sp-vol" type="range" min="0" max="100" value="50">
-</div>
+<div style="margin-top:8px;">Volume: <input id="sp-vol" type="range" min="0" max="100" value="50"></div>
 <pre id="sp-state" style="background:#f6f6f6;padding:8px;"></pre>
 
 <!-- SETTINGS -->
@@ -75,17 +53,12 @@
     </label>
     <small id="pref-save-status" class="muted"></small>
   </div>
-  <small class="muted">This preference controls how the mirror displays the clock and event times.</small>
+  <small class="muted">Controls how the mirror displays the clock and event times.</small>
 </div>
 
 <button id="remoteLogoutBtn">Logout</button>
 
 <script>
-  // Ensure csrftoken cookie exists (harmless if already set)
-  (async () => {
-    try { await fetch("/auth/csrf/", { credentials: "include", cache: "no-store" }); } catch (e) {}
-  })();
-
   function getCookie(name){
     const v = document.cookie.split('; ').find(r=>r.startsWith(name+'='));
     return v ? decodeURIComponent(v.split('=')[1]) : '';
@@ -116,20 +89,19 @@
 </script>
 
 <script>
-  // Mirror login token push
+  // === Mirror login token push (and keep a handle for live settings) ===
   window.addEventListener("DOMContentLoaded", () => {
     fetch("/auth/generate-token/")
       .then(res => res.json())
       .then(data => {
         const token = data.token;
         const loginSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror-login/");
+        window.MIRROR_WS = loginSocket;
         loginSocket.onopen = () => {
-          loginSocket.send(JSON.stringify({
-            type: "send_token_to_mirror",
-            token: token
-          }));
+          loginSocket.send(JSON.stringify({ type: "send_token_to_mirror", token }));
           console.log("🔐 Sent token to mirror:", token);
         };
+        loginSocket.onclose = () => { window.MIRROR_WS = null; };
       })
       .catch(err => console.error("❌ Error generating token:", err));
   });
@@ -146,14 +118,8 @@
       cache: "no-store"
     })
     .then(res => res.json())
-    .then(data => {
-      console.log("✅ Message saved and broadcasted:", data);
-      alert("Success: " + data.status);
-    })
-    .catch(err => {
-      console.error("❌ FETCH ERROR:", err);
-      alert("Error: " + err.message);
-    });
+    .then(data => { alert("Success: " + data.status); })
+    .catch(err => { alert("Error: " + err.message); });
   });
 
   // Calendar form submit
@@ -174,14 +140,8 @@
       cache: "no-store"
     })
     .then(res => res.json())
-    .then(data => {
-      console.log("✅ Event saved and broadcasted:", data);
-      alert("Success: " + data.status);
-    })
-    .catch(err => {
-      console.error("❌ Calendar FETCH error:", err);
-      alert("Error: " + err.message);
-    });
+    .then(data => { alert("Success: " + data.status); })
+    .catch(err => { alert("Error: " + err.message); });
   });
 
   // Logout
@@ -189,15 +149,12 @@
     const res = await fetch("/auth/csrf/", { credentials: "include", cache: "no-store" });
     const data = await res.json();
     const csrfToken = data.csrfToken;
-
     fetch("/auth/logout/", {
       method: "POST",
       headers: { "X-CSRFToken": csrfToken },
       credentials: "include",
       cache: "no-store"
-    }).then(() => {
-      window.location.href = "/auth/login/";
-    });
+    }).then(() => { window.location.href = "/auth/login/"; });
   }
   document.getElementById("remoteLogoutBtn").addEventListener("click", (e) => {
     e.preventDefault();
@@ -213,9 +170,7 @@
       const r = await fetch('/auth/settings/time-format/', { credentials: 'include', cache: 'no-store' });
       const j = await r.json();
       prefCheckbox.checked = !!j.use_24h;
-    } catch (e) {
-      console.warn('Could not load time pref', e);
-    }
+    } catch(e) {}
   }
 
   async function saveTimePref(checked) {
@@ -223,14 +178,19 @@
     try {
       const body = new URLSearchParams();
       body.set('use_24h', checked ? '1' : '0');
-      const r = await fetch('/auth/settings/time-format/', {
+      await fetch('/auth/settings/time-format/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
         credentials: 'include',
         cache: 'no-store',
         body
       });
-      await r.json();
+
+      // push live to mirror
+      if (window.MIRROR_WS && window.MIRROR_WS.readyState === 1) {
+        window.MIRROR_WS.send(JSON.stringify({ type: 'time_pref', use_24h: !!checked }));
+      }
+
       prefStatus.textContent = 'Saved';
       setTimeout(()=> prefStatus.textContent = '', 1200);
     } catch (e) {
@@ -238,7 +198,6 @@
     }
   }
 
-  // init
   loadTimePref();
   prefCheckbox.addEventListener('change', e => saveTimePref(e.target.checked));
 </script>

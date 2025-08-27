@@ -101,7 +101,7 @@ def time_format(request):
         prefs.use_24h = val in ("1", "true", "yes", "on")
         prefs.save()
 
-        # 🔔 Broadcast live update to all mirrors
+        # broadcast live update
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             "mirror_settings",

@@ -48,23 +48,22 @@
   </div>
 </div>
 
-<!-- ===== Helpers: time formatting + reformat all event times ===== -->
+<!-- ===== Helper: time formatting + reformat all event times ===== -->
 <script>
-  // default; will be set from server on load and live-updated via WS
-  window.USE_24H = false;
+  window.USE_24H = false; // will be set via fetch + live WS
 
   function formatTimeString(hhmm) {
-    if (!hhmm) return '';
-    const [hStr, mStr] = hhmm.split(':');
+    if (!hhmm || !/^\d{1,2}:\d{2}$/.test(String(hhmm))) return '';
+    const [hStr, mStr] = String(hhmm).split(':');
     let h = parseInt(hStr, 10);
     const mm = (mStr || '00').padStart(2,'0');
 
     if (window.USE_24H) {
-      return `${String(h).padStart(2,'0')}:${mm}`;
+      return `${String(isNaN(h) ? 0 : h).padStart(2,'0')}:${mm}`;
     } else {
       const ampm = h >= 12 ? 'PM' : 'AM';
       h = h % 12 || 12;
-      return `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
+      return `${String(isNaN(h) ? 12 : h).padStart(2,'0')}:${mm} ${ampm}`;
     }
   }
 
@@ -98,13 +97,11 @@
       const ev = data.event;
       if (!ev) return;
 
-      // figure out day name from YYYY-MM-DD
       const d = new Date(`${ev.event_date}T00:00:00`);
       const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
 
       const list = document.getElementById(`list-${dayName}`);
       if (!list) {
-        // if initial structure isn't there yet, reload the week
         fetch('/Calendar/upcoming_events/')
           .then(r => r.json())
           .then(j => displayCalendarEvents(j.Week))
@@ -112,7 +109,6 @@
         return;
       }
 
-      // remove "No events scheduled" placeholder for that day
       const placeholder = list.querySelector('li[data-placeholder="true"]');
       if (placeholder) placeholder.remove();
 
@@ -234,7 +230,6 @@
 
     for (const [day, dayEvents] of Object.entries(events)) {
       const listId = `list-${day}`;
-
       const section = document.createElement('div');
       section.className = 'day-section';
       section.innerHTML = `<h3>${day}</h3><ul id="${listId}"></ul>`;
@@ -283,7 +278,7 @@
   }
 </script>
 
-<!-- ===== Spotify Now Playing (unchanged) ===== -->
+<!-- ===== Spotify Now Playing ===== -->
 <script>
   function renderSpotify(state){
     const t = (state && state.track) || {};
@@ -296,11 +291,9 @@
     if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
   }
 
-  // Get initial state
   fetch('/spotify/state/', {credentials:'include'})
     .then(r=>r.json()).then(renderSpotify).catch(()=>{});
 
-  // Live updates via WS
   (function(){
     const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
     const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);

@@ -1,15 +1,19 @@
+# Calendar/views.py
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from datetime import date, timedelta, datetime
+from django.utils import timezone
+from datetime import timedelta, datetime
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from .models import CalendarEvent
 
+
 @login_required
 def upcoming_events(request):
-    today = date.today()
+    # Use local date (respects TIME_ZONE) so "today" doesn't slip due to UTC.
+    today = timezone.localdate()
     next_week = today + timedelta(days=7)
 
     events = CalendarEvent.objects.filter(
@@ -20,10 +24,9 @@ def upcoming_events(request):
     event_dict = {}
     for event in events:
         event_day = event.event_date.strftime("%A")
-        if event_day not in event_dict:
-            event_dict[event_day] = []
-        event_dict[event_day].append(event.as_dict())
+        event_dict.setdefault(event_day, []).append(event.as_dict())
 
+    # Build 7-day rolling window starting from 'today'
     week_data = {}
     for i in range(7):
         day = today + timedelta(days=i)
@@ -62,14 +65,14 @@ def add_event(request):
         event_description=desc
     )
 
-    # Broadcast to mirror
+    # Broadcast to all mirrors
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
-       "mirror_calendar",
-       {
-           "type": "calendar_event",
-           "event": event.as_dict(),
-       }
+        "mirror_calendar",
+        {
+            "type": "calendar_event",
+            "event": event.as_dict(),
+        }
     )
 
     return JsonResponse({"status": "Event saved and broadcasted!"})
