@@ -48,7 +48,7 @@
     <h2>🎵 Now Playing</h2>
     <div id="sp-box">
       <img id="sp-img">
-      <div id="sp-meta">
+      <div>
         <div id="sp-title"></div>
         <div id="sp-artist"></div>
       </div>
@@ -57,7 +57,7 @@
 </div>
 
 <script>
-  // ========== Helpers ==========
+  // ====== GLOBALS / HELPERS ======
   window.USE_24H = false;
 
   function formatTimeString(hhmm) {
@@ -118,7 +118,7 @@
     if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
   }
 
-  // ========== Resilient WS helper ==========
+  // ====== Resilient WS helper ======
   function connectWS(path, {onOpen, onMessage, name}, maxDelay=15000) {
     let delay = 1000;
     const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
@@ -127,7 +127,6 @@
     function open() {
       ws = new WebSocket(`${scheme}://${location.host}${path}`);
       ws.onopen = () => {
-        // reset backoff
         delay = 1000;
         if (onOpen) onOpen(ws);
       };
@@ -135,24 +134,21 @@
       ws.onclose = () => retry();
       ws.onerror = () => { try { ws.close(); } catch(_){} };
     }
-
     function retry() {
       setTimeout(open, delay);
       delay = Math.min(delay * 2, maxDelay);
     }
-
     open();
     return () => { try { ws && ws.close(); } catch(_){} };
   }
 
-  // ========== Initial data fetchers ==========
+  // ====== Data fetchers ======
   function fetchCalendarEvents() {
     fetch('/Calendar/upcoming_events/')
       .then(r => r.json())
       .then(data => displayCalendarEvents(data.Week))
       .catch(() => {});
   }
-
   function displayCalendarEvents(events) {
     const calendarDiv = document.getElementById('calendarEvents');
     calendarDiv.innerHTML = '';
@@ -188,7 +184,6 @@
       .then(data => displayWeather(data))
       .catch(() => {});
   }
-
   function displayWeather(data) {
     const weatherDiv = document.getElementById('weatherData');
     if (data.error) { weatherDiv.innerHTML = `<p>${data.error}</p>`; return; }
@@ -201,8 +196,8 @@
     weatherDiv.innerHTML = weatherHTML;
   }
 
-  // ========== Live wiring ==========
-  function startMirrorWebsockets() {
+  // ====== Live wiring (AUTHED) ======
+  function startAuthedSockets() {
     // message
     connectWS('/ws/mirror', {
       name: 'mirror',
@@ -228,10 +223,8 @@
         const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
 
         const list = document.getElementById(`list-${dayName}`);
-        if (!list) {
-          fetchCalendarEvents();
-          return;
-        }
+        if (!list) { fetchCalendarEvents(); return; }
+
         const placeholder = list.querySelector('li[data-placeholder="true"]');
         if (placeholder) placeholder.remove();
 
@@ -248,7 +241,6 @@
     connectWS('/ws/settings/', {
       name: 'settings',
       onOpen: () => {
-        // refresh current pref when (re)connected
         loadTimePrefForMirror().then(() => {
           updateClock();
           reformatAllEventTimes();
@@ -266,11 +258,10 @@
       }
     });
 
-    // spotify now playing
+    // spotify now playing (auth required)
     connectWS('/ws/spotify/', {
       name: 'spotify',
       onOpen: () => {
-        // pull fresh state on connect
         fetch('/spotify/state/', {credentials:'include'})
           .then(r=>r.json()).then(renderSpotify).catch(()=>{});
       },
@@ -281,54 +272,60 @@
         } catch (_){}
       }
     });
-
-    // stocks
-    connectWS('/ws/Stocks/', {
-      name: 'stocks',
-      onMessage: e => {
-        const data = JSON.parse(e.data);
-        if (data.type !== 'trade' || !data.data) return;
-        const grid = document.getElementById('stocksGrid');
-        data.data.forEach(trade => {
-          const symbol = trade.s;
-          const price = trade.p;
-          let stockDiv = document.getElementById(`stock-${symbol}`);
-          if (!stockDiv) {
-            stockDiv = document.createElement('div');
-            stockDiv.id = `stock-${symbol}`;
-            stockDiv.classList.add('stock');
-            stockDiv.innerHTML = `<div class="stock-name">${symbol}</div><div class="stock-price" id="price-${symbol}"></div>`;
-            grid.appendChild(stockDiv);
-          }
-          const priceDiv = document.getElementById(`price-${symbol}`);
-          const prev = parseFloat(priceDiv.getAttribute('data-prev') || price);
-          const changeUp = price > prev;
-          priceDiv.setAttribute('data-prev', String(price));
-          priceDiv.innerHTML = `$${price.toFixed(2)} <span class="${changeUp ? 'up' : 'down'}">${changeUp ? '▲' : '▼'}</span>`;
-        });
-      }
-    });
   }
 
-  // boot
+  // ====== Boot (AUTHED) ======
   document.addEventListener("DOMContentLoaded", async () => {
-    startMirrorWebsockets();
     await loadTimePrefForMirror();
     updateClock();
     setInterval(updateClock, 1000);
     fetchCalendarEvents();
     fetchWeather();
-    // initial spotify pull as a safety (also done on WS connect)
     fetch('/spotify/state/', {credentials:'include'})
       .then(r=>r.json()).then(renderSpotify).catch(()=>{});
+    startAuthedSockets();
   });
 </script>
 
 {% else %}
+<!-- NOT AUTHENTICATED: listen for token from the remote, then browser-POST to set cookie -->
 <div id="waiting-screen" style="text-align:center; margin-top: 20vh;">
   <h1>Please log in on your phone to activate the mirror.</h1>
   <p>Visit <strong>https://rr-smartmirror.onrender.com</strong> to log in.</p>
 </div>
+
+<script>
+  // minimal resilient connector for mirror-login
+  (function(){
+    const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
+    let delay = 1000;
+    function open() {
+      const ws = new WebSocket(`${scheme}://${location.host}/ws/mirror-login/`);
+      ws.onmessage = async (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'login_success' && msg.token) {
+            // IMPORTANT: Post from the BROWSER so the cookie is set client-side.
+            await fetch('/auth/mirror-auth/', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({ token: msg.token })
+            });
+            location.reload(); // now the {% if user.is_authenticated %} branch will render
+          }
+        } catch(_) {}
+      };
+      ws.onclose = () => retry();
+      ws.onerror = () => { try { ws.close(); } catch(_){} };
+    }
+    function retry() {
+      setTimeout(open, delay);
+      delay = Math.min(delay * 2, 15000);
+    }
+    open();
+  })();
+</script>
 {% endif %}
 </body>
 </html>
