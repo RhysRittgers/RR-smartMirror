@@ -13,10 +13,11 @@ class MirrorLoginConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
+        data = json.loads(text_data or "{}")
+
+        # 1) Token-based mirror auth (remote sends token to mirror)
         if data.get("type") == "send_token_to_mirror":
             token = data.get("token")
-            # server-to-server POST to create the session for the mirror client
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     "https://mirror.rr-smartmirror.com/auth/mirror-auth/",
@@ -30,12 +31,22 @@ class MirrorLoginConsumer(AsyncWebsocketConsumer):
                     else:
                         await self.send(text_data=json.dumps({"type": "login_failed"}))
 
+        # 2) LIVE SETTINGS RELAY (this is the missing piece)
+        elif data.get("type") == "time_pref":
+            use_24h = bool(data.get("use_24h"))
+            # Rebroadcast on the MIRROR server so mirror pages listening on /ws/settings/ update instantly
+            await self.channel_layer.group_send(
+                "mirror_settings",
+                {"type": "time_pref", "use_24h": use_24h}
+            )
+
     async def login_success(self, event):
         await self.send(text_data=json.dumps({
             "type": "login_success",
             "username": event["username"],
             "token": event.get("token")
         }))
+
 
 class SettingsConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
