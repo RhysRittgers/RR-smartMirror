@@ -49,11 +49,11 @@
     <div class="weather-container" id="weatherData"><p>Loading weather...</p></div>
 
     <h2>🎵 Now Playing</h2>
-    <div id="sp-box">
-      <img id="sp-img" style="max-width:160px;border-radius:10px;display:none">
-      <div id="sp-title" style="margin-top:8px;font-weight:bold;"></div>
-      <div id="sp-artist" style="opacity:0.8;"></div>
-    </div>
+<div id="sp-box">
+  <img id="sp-img" style="max-width:160px;border-radius:10px;display:none">
+  <div id="sp-title" style="margin-top:8px;font-weight:bold;"></div>
+  <div id="sp-artist" style="opacity:0.8;"></div>
+</div>
   </div>
 </div>
 
@@ -319,19 +319,31 @@
     const img = document.getElementById('sp-img');
     const title = document.getElementById('sp-title');
     const artist = document.getElementById('sp-artist');
+
     title.textContent = t.name || '—';
     artist.textContent = (t.artists || []).join(', ') || '';
     if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
   }
-  fetch('/spotify/state/', {credentials:'include'}).then(r=>r.json()).then(renderSpotify).catch(()=>{});
+
+  // Initial state (fine if this 401s; WS will still push updates)
+  fetch('/spotify/state/', { credentials:'include', cache:'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { if (j) renderSpotify(j); })
+    .catch(()=>{});
+
+  // Live updates via WS
   (function(){
     const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
     const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
-    ws.onmessage = (e)=>{ try{
-      const msg = JSON.parse(e.data);
-      if (msg.type === 'spotify_state') renderSpotify(msg.data);
-    }catch(_){}};})();
+    ws.onmessage = (e)=>{
+      try{
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'spotify_state') renderSpotify(msg.data);
+      }catch(_){}
+    };
+  })();
 </script>
+
 
 </body>
 </html>
