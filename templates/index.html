@@ -312,37 +312,97 @@
   }
 </script>
 
-<!-- ===== Spotify Now Playing ===== -->
+<!-- ===== Spotify Now Playing (remote logic, adapted for mirror) ===== -->
 <script>
-  function renderSpotify(state){
-    const t = (state && state.track) || {};
-    const img = document.getElementById('sp-img');
-    const title = document.getElementById('sp-title');
-    const artist = document.getElementById('sp-artist');
+  (function () {
+    const els = {
+      img:    document.getElementById('sp-img'),
+      title:  document.getElementById('sp-title'),
+      artist: document.getElementById('sp-artist'),
+    };
 
-    title.textContent = t.name || '—';
-    artist.textContent = (t.artists || []).join(', ') || '';
-    if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
-  }
+    // Use the same "j.state || j" approach the remote uses
+    function unwrap(payload) {
+      return (payload && payload.state) ? payload.state : payload || {};
+    }
 
-  // Initial state (fine if this 401s; WS will still push updates)
-  fetch('/spotify/state/', { credentials:'include', cache:'no-store' })
-    .then(r => r.ok ? r.json() : null)
-    .then(j => { if (j) renderSpotify(j); })
-    .catch(()=>{});
+    function toArtistList(artists) {
+      // Handles: ["Drake"], [{name:"Drake"}], "Drake", undefined
+      if (Array.isArray(artists)) {
+        return artists.map(a => (typeof a === 'string' ? a : (a && a.name) || '')).filter(Boolean);
+      }
+      if (typeof artists === 'string') return [artists];
+      return [];
+    }
 
-  // Live updates via WS
-  (function(){
+    // Extract a best-effort track snapshot from whatever shape we get
+    function extract(stateLike) {
+      const s = unwrap(stateLike) || {};
+
+      // Common shapes:
+      // - { track: { name, artists, image, album:{images:[{url}]}} }
+      // - Spotify Web API "currently playing":
+      //     { item: { name, artists:[{name}], album:{images:[{url}]}} }
+      // - Simpler: { name, artists, image }
+      const t = s.track || s.item || s.current || s.currently_playing || s;
+
+      const name = t?.name || s?.name || '';
+      const artists = toArtistList(t?.artists || s?.artists);
+      const image =
+        t?.image ||
+        t?.album?.images?.[0]?.url ||
+        s?.image ||
+        s?.albumArt ||
+        (Array.isArray(t?.images) ? t.images[0]?.url : undefined);
+
+      return { name, artists, image };
+    }
+
+    function render(stateLike) {
+      const { name, artists, image } = extract(stateLike);
+
+      els.title.textContent  = name || '—';
+      els.artist.textContent = artists.join(', ') || '';
+
+      if (image) {
+        els.img.src = image;
+        els.img.style.display = 'block';
+      } else {
+        els.img.style.display = 'none';
+      }
+    }
+
+    // Initial state (same as remote: tolerant if 401; WS will push later)
+    fetch('/spotify/state/', { credentials: 'include', cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { if (j) render(j); })
+      .catch(() => {});
+
+    // Live updates (this mirrors your remote’s “real-time feel”)
     const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
     const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
-    ws.onmessage = (e)=>{
-      try{
+    ws.onmessage = (e) => {
+      try {
         const msg = JSON.parse(e.data);
-        if (msg.type === 'spotify_state') renderSpotify(msg.data);
-      }catch(_){}
+        // accept {type:'spotify_state', data:{...}} or just {state:{...}}
+        if (msg?.type === 'spotify_state') render(msg.data);
+        else if (msg?.state)               render(msg.state);
+      } catch {}
     };
   })();
 </script>
+
+
+<pre id="sp-debug" style="opacity:.5;font-size:.8rem"></pre>
+<script>
+  // Drop-in debug: mirror what's rendered
+  (function () {
+    const dbg = document.getElementById('sp-debug');
+    const _render = window.__renderSpotifyDebugWrap;
+    // Monkey-patch the render function above (optional)
+  })();
+</script>
+
 
 
 </body>
