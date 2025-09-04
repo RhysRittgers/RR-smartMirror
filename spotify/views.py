@@ -4,7 +4,7 @@ import requests
 import urllib.parse
 from django.conf import settings
 from django.shortcuts import redirect
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -29,7 +29,9 @@ def spotify_login(request):
 def spotify_callback(request):
     code = request.GET.get("code")
     if not code:
-        return JsonResponse({"error": "No code from Spotify", "query": request.GET.dict()}, status=400)
+        # surface the problem instead of silently redirecting
+        err = request.GET.dict()
+        return JsonResponse({"error": "No code from Spotify", "query": err}, status=400)
 
     data = {
         "grant_type": "authorization_code",
@@ -39,7 +41,6 @@ def spotify_callback(request):
         "client_secret": settings.SPOTIFY_CLIENT_SECRET,
     }
     r = requests.post(SPOTIFY_TOKEN_URL, data=data)
-    token_info = {}
     try:
         token_info = r.json()
     except Exception:
@@ -48,11 +49,12 @@ def spotify_callback(request):
     if r.status_code != 200 or "access_token" not in token_info:
         return JsonResponse({"error": "Token exchange failed", "status": r.status_code, "body": token_info}, status=400)
 
-    # Save tokens to session (shared across mirror & remote in your setup)
+    # Save to session (shared across mirror & remote)
     request.session["spotify_access_token"]  = token_info["access_token"]
     request.session["spotify_refresh_token"] = token_info.get("refresh_token")
+    # store approximate expiry epoch
     request.session["spotify_expires_at"]    = int(time.time()) + int(token_info.get("expires_in", 3600)) - 60
-    request.session["spotify_token_raw"]     = token_info
+    request.session["spotify_token_raw"]     = token_info  # handy for debugging
     request.session.save()
 
     return redirect("/Dashboard/")
@@ -82,12 +84,9 @@ def _ensure_access_token(request):
         "client_secret": settings.SPOTIFY_CLIENT_SECRET,
     }
     r = requests.post(SPOTIFY_TOKEN_URL, data=data)
-    try:
-        info = r.json()
-    except Exception:
-        info = {}
-
+    info = r.json()
     if r.status_code != 200 or "access_token" not in info:
+        # don’t blow up—just clear broken tokens
         for k in ("spotify_access_token","spotify_refresh_token","spotify_expires_at"):
             request.session.pop(k, None)
         request.session.save()
@@ -161,39 +160,21 @@ def _spotify_api(request, method, url, **kw):
         body = {"raw": r.text}
     return r, body, r.status_code
 
-# ---------- NEW: robust normalizers for both endpoints ----------
-def _normalize_currently_playing(obj):
-    if not obj or obj is True:
-        return {"is_playing": False, "track": None}
-    item = (obj or {}).get("item") or {}
+def _normalize_state(json_obj):
+    if not json_obj:
+        return {"playing": False, "track": None}
+    item = (json_obj or {}).get("item") or {}
     return {
-        "is_playing": obj.get("is_playing"),
-        "progress_ms": obj.get("progress_ms"),
-        "device": (obj.get("device") or {}).get("name"),
+        "is_playing": json_obj.get("is_playing"),
+        "progress_ms": json_obj.get("progress_ms"),
+        "device": (json_obj.get("device") or {}).get("name"),
         "track": {
             "name": item.get("name"),
             "artists": [a.get("name") for a in (item.get("artists") or [])],
             "album": (item.get("album") or {}).get("name"),
             "image": ((item.get("album") or {}).get("images") or [{}])[0].get("url"),
-        } if item else None,
+        }
     }
-
-def _normalize_me_player(obj):
-    if not obj or obj is True:
-        return {"is_playing": False, "track": None}
-    item = (obj or {}).get("item") or {}
-    return {
-        "is_playing": obj.get("is_playing"),
-        "progress_ms": obj.get("progress_ms"),
-        "device": (obj.get("device") or {}).get("name"),
-        "track": {
-            "name": item.get("name"),
-            "artists": [a.get("name") for a in (item.get("artists") or [])],
-            "album": (item.get("album") or {}).get("name"),
-            "image": ((item.get("album") or {}).get("images") or [{}])[0].get("url"),
-        } if item else None,
-    }
-# ----------------------------------------------------------------
 
 @login_required
 def devices(request):
@@ -202,27 +183,14 @@ def devices(request):
 
 @login_required
 def state(request):
-    """Best-effort current track: try /currently-playing first, then /me/player."""
-    # Try /currently-playing
-    r1, body1, s1 = _spotify_api(request, "GET", SPOTIFY_CURRENT)
-    if s1 == 200:
-        norm = _normalize_currently_playing(body1)
-        if norm.get("track"):
-            return JsonResponse(norm, status=200)
-    # Fallback to /me/player
-    r2, body2, s2 = _spotify_api(request, "GET", SPOTIFY_ME_PLAYER)
-    if s2 == 200:
-        norm = _normalize_me_player(body2)
-        return JsonResponse(norm, status=200)
-    # No active playback
-    if s1 == 204 or s2 == 204:
-        return JsonResponse({"is_playing": False, "track": None}, status=200)
-    # Bubble up error
-    return JsonResponse({"error": "spotify_unavailable", "s1": s1, "s2": s2}, status=502)
+    r, body, status = _spotify_api(request, "GET", SPOTIFY_PLAYER)
+    if status == 204:  # no active device
+        return JsonResponse({"is_playing": False, "track": None})
+    return JsonResponse(_normalize_state(body), status=200 if status == 200 else status)
 
 @login_required
 def control(request, action):
-    # Map actions
+    # Map simple actions to endpoints
     routes = {
         "next":  ("POST", SPOTIFY_NEXT, {}),
         "prev":  ("POST", SPOTIFY_PREVIOUS, {}),
@@ -249,18 +217,13 @@ def control(request, action):
     if status not in (200, 201, 202, 204):
         return JsonResponse({"error": "spotify_error", "status": status, "body": body}, status=400)
 
-    # Pull fresh state and broadcast to mirror via Channels
-    r2, body2, st2 = _spotify_api(request, "GET", SPOTIFY_ME_PLAYER)
-    norm = _normalize_me_player(body2) if st2 == 200 else {"is_playing": False, "track": None}
-
+    # pull fresh state and broadcast to mirror via Channels
+    r2, body2, st2 = _spotify_api(request, "GET", SPOTIFY_PLAYER)
+    norm = _normalize_state(body2) if st2 == 200 else {"is_playing": False, "track": None}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         f"user_{request.user.id}",
         {"type": "spotify.update", "payload": norm}
     )
-    async_to_sync(channel_layer.group_send)(
-        "mirror_spotify",
-        {"type": "spotify.update", "payload": norm}
-    )
-
     return JsonResponse({"ok": True, "state": norm})
+
