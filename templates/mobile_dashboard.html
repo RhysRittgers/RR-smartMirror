@@ -14,14 +14,12 @@
 <body>
 <h1>Smart Mirror Remote</h1>
 
-<!-- MESSAGE -->
 <h2>Update Mirror Message</h2>
 <form id="messageForm">
   <input type="text" name="message" placeholder="New message" required>
   <button type="submit">Send</button>
 </form>
 
-<!-- CALENDAR -->
 <h2>Add New Calendar Event</h2>
 <form id="calendarForm">
   <input type="text" name="event_name" placeholder="Event Name" required><br>
@@ -31,7 +29,6 @@
   <button type="submit">Add Event</button>
 </form>
 
-<!-- SPOTIFY CONTROL -->
 <h2>Spotify</h2>
 <p><a href="/spotify/login/">Connect Spotify</a></p>
 <div>
@@ -41,9 +38,7 @@
   <button id="sp-next">Next</button>
 </div>
 <div style="margin-top:8px;">Volume: <input id="sp-vol" type="range" min="0" max="100" value="50"></div>
-<pre id="sp-state" style="background:#f6f6f6;padding:8px;"></pre>
 
-<!-- SETTINGS -->
 <div class="settings-card">
   <h2>Settings</h2>
   <div class="row">
@@ -64,6 +59,23 @@
     return v ? decodeURIComponent(v.split('=')[1]) : '';
   }
 
+  // ----- MIRROR socket bootstrap (used for time-pref, not for Spotify rendering)
+  window.addEventListener("DOMContentLoaded", () => {
+    fetch("/auth/generate-token/")
+      .then(res => res.json())
+      .then(data => {
+        const loginSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror-login/");
+        window.MIRROR_WS = loginSocket;
+        loginSocket.onopen = () => {
+          loginSocket.send(JSON.stringify({ type: "send_token_to_mirror", token: data.token }));
+          window.dispatchEvent(new Event("MIRROR_WS_READY"));
+        };
+        loginSocket.onclose = () => { window.MIRROR_WS = null; };
+      })
+      .catch(err => console.error("❌ Error generating token:", err));
+  });
+
+  // ----- Spotify controls (no JSON dump, no manual forwarding)
   async function ctrl(action, qs=''){
     const res = await fetch(`/spotify/control/${action}/${qs}`, {
       method: 'POST',
@@ -71,8 +83,8 @@
       credentials: 'include',
       cache: 'no-store'
     });
-    const j = await res.json().catch(()=>({}));
-    try { document.getElementById('sp-state').textContent = JSON.stringify(j.state||j, null, 2); } catch(e){}
+    // Backend will broadcast to Channels; nothing to render here.
+    try { await res.json(); } catch(_) {}
   }
 
   document.getElementById('sp-prev').onclick  = ()=>ctrl('prev');
@@ -80,33 +92,10 @@
   document.getElementById('sp-pause').onclick = ()=>ctrl('pause');
   document.getElementById('sp-next').onclick  = ()=>ctrl('next');
   document.getElementById('sp-vol').oninput   = (e)=>ctrl('volume', `?v=${e.target.value}`);
-
-  // show initial spotify state on load
-  fetch('/spotify/state/', {credentials:'include'})
-    .then(r=>r.json()).then(j=>{
-      document.getElementById('sp-state').textContent = JSON.stringify(j, null, 2);
-    });
 </script>
 
 <script>
-  // === Mirror login token push (and keep a handle for live settings) ===
-  window.addEventListener("DOMContentLoaded", () => {
-    fetch("/auth/generate-token/")
-      .then(res => res.json())
-      .then(data => {
-        const token = data.token;
-        const loginSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror-login/");
-        window.MIRROR_WS = loginSocket;
-        loginSocket.onopen = () => {
-          loginSocket.send(JSON.stringify({ type: "send_token_to_mirror", token }));
-          console.log("🔐 Sent token to mirror:", token);
-        };
-        loginSocket.onclose = () => { window.MIRROR_WS = null; };
-      })
-      .catch(err => console.error("❌ Error generating token:", err));
-  });
-
-  // Message form submit
+  // Message form
   document.getElementById("messageForm").addEventListener("submit", function (e) {
     e.preventDefault();
     const message = e.target.message.value.trim();
@@ -116,39 +105,32 @@
       body: new URLSearchParams({ message }),
       credentials: "include",
       cache: "no-store"
-    })
-    .then(res => res.json())
-    .then(data => { alert("Success: " + data.status); })
-    .catch(err => { alert("Error: " + err.message); });
+    }).then(r=>r.json()).then(()=> alert("Message sent!")).catch(err=>alert(err.message));
   });
 
-  // Calendar form submit
+  // Calendar form
   document.getElementById("calendarForm").addEventListener("submit", (e) => {
     e.preventDefault();
     const form = e.target;
-    const formData = new URLSearchParams();
-    formData.append("event_name", form.event_name.value);
-    formData.append("event_date", form.event_date.value);
-    formData.append("event_time", form.event_time.value);
-    formData.append("event_description", form.event_description.value);
-
+    const body = new URLSearchParams({
+      event_name: form.event_name.value,
+      event_date: form.event_date.value,
+      event_time: form.event_time.value,
+      event_description: form.event_description.value
+    });
     fetch("https://mirror.rr-smartmirror.com/Calendar/add-event/", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: formData,
+      body,
       credentials: "include",
       cache: "no-store"
-    })
-    .then(res => res.json())
-    .then(data => { alert("Success: " + data.status); })
-    .catch(err => { alert("Error: " + err.message); });
+    }).then(r=>r.json()).then(()=> alert("Event saved!")).catch(err=>alert(err.message));
   });
 
   // Logout
   async function secureLogout() {
     const res = await fetch("/auth/csrf/", { credentials: "include", cache: "no-store" });
-    const data = await res.json();
-    const csrfToken = data.csrfToken;
+    const { csrfToken } = await res.json();
     fetch("/auth/logout/", {
       method: "POST",
       headers: { "X-CSRFToken": csrfToken },
@@ -161,43 +143,28 @@
     secureLogout();
   });
 
-  // === Settings: 24h time toggle ===
+  // Settings save + live push
   const prefCheckbox = document.getElementById('pref-24h');
   const prefStatus = document.getElementById('pref-save-status');
-
   async function loadTimePref() {
-    try {
-      const r = await fetch('/auth/settings/time-format/', { credentials: 'include', cache: 'no-store' });
-      const j = await r.json();
-      prefCheckbox.checked = !!j.use_24h;
-    } catch(e) {}
+    const r = await fetch('/auth/settings/time-format/', { credentials: 'include', cache: 'no-store' });
+    const j = await r.json(); prefCheckbox.checked = !!j.use_24h;
   }
-
   async function saveTimePref(checked) {
     prefStatus.textContent = 'Saving…';
-    try {
-      const body = new URLSearchParams();
-      body.set('use_24h', checked ? '1' : '0');
-      await fetch('/auth/settings/time-format/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
-        credentials: 'include',
-        cache: 'no-store',
-        body
-      });
-
-      // push live to mirror
-      if (window.MIRROR_WS && window.MIRROR_WS.readyState === 1) {
-        window.MIRROR_WS.send(JSON.stringify({ type: 'time_pref', use_24h: !!checked }));
-      }
-
-      prefStatus.textContent = 'Saved';
-      setTimeout(()=> prefStatus.textContent = '', 1200);
-    } catch (e) {
-      prefStatus.textContent = 'Failed to save';
+    const body = new URLSearchParams({ use_24h: checked ? '1' : '0' });
+    await fetch('/auth/settings/time-format/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
+      credentials: 'include',
+      cache: 'no-store',
+      body
+    });
+    if (window.MIRROR_WS && window.MIRROR_WS.readyState === 1) {
+      window.MIRROR_WS.send(JSON.stringify({ type: 'time_pref', use_24h: !!checked }));
     }
+    prefStatus.textContent = 'Saved'; setTimeout(()=> prefStatus.textContent = '', 1200);
   }
-
   loadTimePref();
   prefCheckbox.addEventListener('change', e => saveTimePref(e.target.checked));
 </script>

@@ -220,10 +220,17 @@ def control(request, action):
     # pull fresh state and broadcast to mirror via Channels
     r2, body2, st2 = _spotify_api(request, "GET", SPOTIFY_PLAYER)
     norm = _normalize_state(body2) if st2 == 200 else {"is_playing": False, "track": None}
+
     channel_layer = get_channel_layer()
+    # Per-user group
     async_to_sync(channel_layer.group_send)(
         f"user_{request.user.id}",
         {"type": "spotify.update", "payload": norm}
     )
-    return JsonResponse({"ok": True, "state": norm})
+    # Shared mirror group (optional, if your consumer also joins this)
+    async_to_sync(channel_layer.group_send)(
+        "mirror_spotify",
+        {"type": "spotify.update", "payload": norm}
+    )
 
+    return JsonResponse({"ok": True, "state": norm})

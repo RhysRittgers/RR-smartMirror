@@ -15,7 +15,7 @@ class MirrorLoginConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data or "{}")
 
-        # 1) Token-based mirror auth (remote sends token to mirror)
+        # 1) Remote sends a one-time token so the MIRROR host can log a session in.
         if data.get("type") == "send_token_to_mirror":
             token = data.get("token")
             async with aiohttp.ClientSession() as session:
@@ -31,13 +31,21 @@ class MirrorLoginConsumer(AsyncWebsocketConsumer):
                     else:
                         await self.send(text_data=json.dumps({"type": "login_failed"}))
 
-        # 2) LIVE SETTINGS RELAY (this is the missing piece)
+        # 2) Remote toggles time preference -> rebroadcast to mirrors
         elif data.get("type") == "time_pref":
             use_24h = bool(data.get("use_24h"))
-            # Rebroadcast on the MIRROR server so mirror pages listening on /ws/settings/ update instantly
             await self.channel_layer.group_send(
                 "mirror_settings",
                 {"type": "time_pref", "use_24h": use_24h}
+            )
+
+        # 3) NEW: Remote pushes spotify state -> rebroadcast to mirrors
+        elif data.get("type") == "spotify_state":
+            payload = data.get("payload") or data.get("state") or {}
+            # Broadcast to a mirror-wide group. (We can scope per-user later.)
+            await self.channel_layer.group_send(
+                "mirror_spotify",
+                {"type": "spotify.update", "payload": payload}
             )
 
     async def login_success(self, event):

@@ -49,11 +49,12 @@
     <div class="weather-container" id="weatherData"><p>Loading weather...</p></div>
 
     <h2>🎵 Now Playing</h2>
-<div id="sp-box">
-  <img id="sp-img" style="max-width:160px;border-radius:10px;display:none">
-  <div id="sp-title" style="margin-top:8px;font-weight:bold;"></div>
-  <div id="sp-artist" style="opacity:0.8;"></div>
-</div>
+    <div id="sp-box">
+      <img id="sp-img" style="max-width:160px;border-radius:10px;display:none">
+      <div id="sp-title" style="margin-top:8px;font-weight:bold;"></div>
+      <div id="sp-artist" style="opacity:0.8;"></div>
+      <div id="sp-album" style="opacity:0.7;font-size:0.95rem;"></div>
+    </div>
   </div>
 </div>
 
@@ -312,37 +313,45 @@
   }
 </script>
 
+<!-- ===== Spotify Now Playing (mirror) ===== -->
 <script>
-  function getCookie(name){
-    const v = document.cookie.split('; ').find(r=>r.startsWith(name+'='));
-    return v ? decodeURIComponent(v.split('=')[1]) : '';
+  function renderSpotify(state){
+    const t = (state && state.track) || {};
+    const img = document.getElementById('sp-img');
+    const title = document.getElementById('sp-title');
+    const artist = document.getElementById('sp-artist');
+    const album = document.getElementById('sp-album');
+
+    title.textContent = t.name || '—';
+    artist.textContent = (t.artists || []).join(', ') || '';
+    album.textContent = t.album || '';
+
+    if (t.image) {
+      img.src = t.image;
+      img.style.display = 'block';
+    } else {
+      img.style.display = 'none';
+    }
   }
 
-  async function ctrl(action, qs=''){
-    const res = await fetch(`/spotify/control/${action}/${qs}`, {
-      method: 'POST',
-      headers: {'X-CSRFToken': getCookie('csrftoken')},
-      credentials: 'include',
-      cache: 'no-store'
-    });
-    const j = await res.json().catch(()=>({}));
-    try { document.getElementById('sp-state').textContent = JSON.stringify(j.state||j, null, 2); } catch(e){}
-  }
+  // Live updates from server (Channels → /ws/spotify/)
+  (function(){
+    const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
+    const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
+    ws.onmessage = (e)=>{
+      try{
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'spotify_state') renderSpotify(msg.data);
+      }catch(_){}
+    };
+  })();
 
-  document.getElementById('sp-prev').onclick  = ()=>ctrl('prev');
-  document.getElementById('sp-play').onclick  = ()=>ctrl('play');
-  document.getElementById('sp-pause').onclick = ()=>ctrl('pause');
-  document.getElementById('sp-next').onclick  = ()=>ctrl('next');
-  document.getElementById('sp-vol').oninput   = (e)=>ctrl('volume', `?v=${e.target.value}`);
-
-  // show initial spotify state on load
-  fetch('/spotify/state/', {credentials:'include'})
-    .then(r=>r.json()).then(j=>{
-      document.getElementById('sp-state').textContent = JSON.stringify(j, null, 2);
-    });
+  // Initial snapshot (will 401 if mirror session isn’t authed yet)
+  fetch('/spotify/state/', {credentials:'include', cache:'no-store'})
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { if (j) renderSpotify(j); })
+    .catch(()=>{});
 </script>
-
-
 
 </body>
 </html>
