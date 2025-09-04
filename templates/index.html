@@ -85,7 +85,7 @@
 <script>
   // helpers for week math
   function getWeekStart() {
-    const now = new Date();               // local time
+    const now = new Date();
     const js = now.getDay();              // 0=Sun..6=Sat
     const offset = (js + 6) % 7;          // 0=Mon..6=Sun
     return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
@@ -110,7 +110,7 @@
       }
     };
 
-    // Calendar WS (live add, but only if event is in THIS fixed week)
+    // Calendar WS
     const calendarSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
     calendarSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -120,7 +120,7 @@
       const evDate = new Date(`${ev.event_date}T00:00:00`);
       const wkStart = getWeekStart();
       const wkEnd = new Date(wkStart); wkEnd.setDate(wkStart.getDate()+7);
-      if (evDate < wkStart || evDate >= wkEnd) return; // ignore out-of-week events
+      if (evDate < wkStart || evDate >= wkEnd) return;
 
       const dayName = evDate.toLocaleDateString('en-US', { weekday: 'long' });
       const list = document.getElementById(`list-${dayName}`);
@@ -236,7 +236,6 @@
       .catch(err => console.error('Error fetching calendar events:', err));
   }
 
-  // Fixed week (Mon→Sun of the current week). Filter events to this week only.
   function displayCalendarEvents(events) {
     const calendarDiv = document.getElementById('calendarEvents');
     const monthEl = document.getElementById('calendarMonth');
@@ -244,10 +243,9 @@
 
     const BASE = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
-    const weekStart = getWeekStart();                 // Monday of this week
+    const weekStart = getWeekStart();
     const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+7);
 
-    // Month label under the title (use today's month/year)
     const today = new Date();
     monthEl.textContent = today.toLocaleDateString('en-US', { month:'long', year:'numeric' });
 
@@ -270,7 +268,6 @@
       const ul = section.querySelector('ul');
       const raw = events[day] || [];
 
-      // Keep only events whose event_date matches this day's date (YYYY-MM-DD)
       const wantYMD = ymd(d);
       const filtered = raw.filter(ev => typeof ev === 'object' && ev.event_date === wantYMD);
 
@@ -291,67 +288,3 @@
         });
       }
     });
-  }
-
-  function fetchWeather() {
-    fetch('/Weather/user_weather/')
-      .then(r => r.json())
-      .then(displayWeather)
-      .catch(err => console.error('Error fetching weather data:', err));
-  }
-
-  function displayWeather(data) {
-    const weatherDiv = document.getElementById('weatherData');
-    if (data.error) { weatherDiv.innerHTML = `<p>${data.error}</p>`; return; }
-    let weatherHTML = `<h3>${data.location}</h3><p>🌡 Temperature: ${data.temperature}°${data.unit[0]}</p>`;
-    weatherHTML += data.humidity !== "Hidden" ? `<p>💧 Humidity: ${data.humidity}%</p>` : "";
-    weatherHTML += data.forcast !== "Hidden" ? `<p>🌤 Forecast: ${data.forcast}</p>` : "";
-    weatherHTML += data.sunrise_sunset !== "Hidden"
-      ? `<p>Sunrise: ${new Date(data.sunrise_sunset.sunrise * 1000).toLocaleTimeString()}</p>
-         <p>Sunset: ${new Date(data.sunrise_sunset.sunset * 1000).toLocaleTimeString()}</p>` : "";
-    weatherDiv.innerHTML = weatherHTML;
-  }
-</script>
-
-<!-- ===== Spotify Now Playing (mirror) ===== -->
-<script>
-  function renderSpotify(state){
-    const t = (state && state.track) || {};
-    const img = document.getElementById('sp-img');
-    const title = document.getElementById('sp-title');
-    const artist = document.getElementById('sp-artist');
-    const album = document.getElementById('sp-album');
-
-    title.textContent = t.name || '—';
-    artist.textContent = (t.artists || []).join(', ') || '';
-    album.textContent = t.album || '';
-
-    if (t.image) {
-      img.src = t.image;
-      img.style.display = 'block';
-    } else {
-      img.style.display = 'none';
-    }
-  }
-
-  // Live updates from server (Channels → /ws/spotify/)
-  (function(){
-    const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-    const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
-    ws.onmessage = (e)=>{
-      try{
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'spotify_state') renderSpotify(msg.data);
-      }catch(_){}
-    };
-  })();
-
-  // Initial snapshot (will 401 if mirror session isn’t authed yet)
-  fetch('/spotify/state/', {credentials:'include', cache:'no-store'})
-    .then(r => r.ok ? r.json() : null)
-    .then(j => { if (j) renderSpotify(j); })
-    .catch(()=>{});
-</script>
-
-</body>
-</html>

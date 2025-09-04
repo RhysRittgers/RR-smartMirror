@@ -59,7 +59,7 @@
     return v ? decodeURIComponent(v.split('=')[1]) : '';
   }
 
-  // ----- MIRROR socket bootstrap (used for time-pref, not for Spotify rendering)
+  // Mirror-login WS bootstrap (for time pref; Spotify display stays on mirror)
   window.addEventListener("DOMContentLoaded", () => {
     fetch("/auth/generate-token/")
       .then(res => res.json())
@@ -75,7 +75,7 @@
       .catch(err => console.error("❌ Error generating token:", err));
   });
 
-  // ----- Spotify controls (no JSON dump, no manual forwarding)
+  // Spotify controls (no JSON dump, backend broadcasts to mirror groups)
   async function ctrl(action, qs=''){
     const res = await fetch(`/spotify/control/${action}/${qs}`, {
       method: 'POST',
@@ -83,7 +83,6 @@
       credentials: 'include',
       cache: 'no-store'
     });
-    // Backend will broadcast to Channels; nothing to render here.
     try { await res.json(); } catch(_) {}
   }
 
@@ -133,7 +132,7 @@
     const { csrfToken } = await res.json();
     fetch("/auth/logout/", {
       method: "POST",
-      headers: { "X-CSRFToken": csrfToken },
+      headers: "X-CSRFToken" in {} ? {'X-CSRFToken': csrfToken} : {},
       credentials: "include",
       cache: "no-store"
     }).then(() => { window.location.href = "/auth/login/"; });
