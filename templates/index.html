@@ -16,6 +16,12 @@
     .today .date-pill { background:rgba(0,180,255,.35); }
     .calendar-container ul { margin:4px 0 0 0; padding-left:18px; }
     .calendar-container li { margin:2px 0; }
+
+    /* --- tiny Spotify layout polish (doesn't affect other sections) --- */
+    #sp-box { display:flex; align-items:center; gap:12px; margin-top:6px; }
+    #sp-img { width:160px; height:160px; object-fit:cover; border-radius:10px; display:none; }
+    #sp-title { margin-top:8px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+    #sp-artist, #sp-album { opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
   </style>
 </head>
 <body>
@@ -49,11 +55,15 @@
     <div class="weather-container" id="weatherData"><p>Loading weather...</p></div>
 
     <h2>🎵 Now Playing</h2>
-<div id="sp-box">
-  <img id="sp-img" style="max-width:160px;border-radius:10px;display:none">
-  <div id="sp-title" style="margin-top:8px;font-weight:bold;"></div>
-  <div id="sp-artist" style="opacity:0.8;"></div>
-</div>
+    <div id="sp-box">
+      <!-- kept your img, just let CSS size it -->
+      <img id="sp-img" style="border-radius:10px;display:none">
+      <div>
+        <div id="sp-title" style="margin-top:8px;font-weight:bold;"></div>
+        <div id="sp-artist" style="opacity:0.8;"></div>
+        <div id="sp-album" style="opacity:0.8;"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -316,13 +326,16 @@
 <script>
   function renderSpotify(state){
     const t = (state && state.track) || {};
-    const img = document.getElementById('sp-img');
-    const title = document.getElementById('sp-title');
+    const img    = document.getElementById('sp-img');
+    const title  = document.getElementById('sp-title');
     const artist = document.getElementById('sp-artist');
+    const album  = document.getElementById('sp-album');
 
-    title.textContent = t.name || '—';
-    artist.textContent = (t.artists || []).join(', ') || '';
-    if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
+    title.textContent  = t && t.name ? t.name : '—';
+    artist.textContent = (t && t.artists ? t.artists : []).join(', ') || '';
+    album.textContent  = (t && t.album) ? t.album : '';
+
+    if (t && t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
   }
 
   // Live updates from the mirror host
@@ -337,15 +350,20 @@
     };
   })();
 
-  // Optional: try to load a starting snapshot (will be 401 if mirror session isn’t authed yet)
+  // Initial snapshot
   fetch('/spotify/state/', {credentials:'include', cache:'no-store'})
     .then(r=>r.ok ? r.json() : null)
     .then(j => { if (j) renderSpotify(j); })
     .catch(()=>{});
+
+  // Light polling so auto-advance stays in sync (doesn't affect other features)
+  setInterval(() => {
+    fetch('/spotify/state/', {credentials:'include', cache:'no-store'})
+      .then(r => r.ok ? r.json() : null)
+      .then(j => { if (j) renderSpotify(j); })
+      .catch(()=>{});
+  }, 7000);
 </script>
-
-
-
 
 </body>
 </html>

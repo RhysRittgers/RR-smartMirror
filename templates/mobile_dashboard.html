@@ -69,7 +69,6 @@
         window.MIRROR_WS = loginSocket;
         loginSocket.onopen = () => {
           loginSocket.send(JSON.stringify({ type: "send_token_to_mirror", token: data.token }));
-          // Let other scripts know the mirror socket is ready
           window.dispatchEvent(new Event("MIRROR_WS_READY"));
         };
         loginSocket.onclose = () => { window.MIRROR_WS = null; };
@@ -115,6 +114,23 @@
         window.addEventListener("MIRROR_WS_READY", forward, { once: true });
       }
     });
+
+  // --- NEW: light polling so the remote updates when tracks auto-advance ---
+  setInterval(() => {
+    fetch('/spotify/state/', {credentials:'include', cache:'no-store'})
+      .then(r => r.ok ? r.json() : null)
+      .then(j => {
+        if (!j) return;
+        const pre = document.getElementById('sp-state');
+        if (pre) pre.textContent = JSON.stringify(j, null, 2);
+
+        // Optional: also forward to mirror so it stays perfectly in sync
+        if (window.MIRROR_WS && window.MIRROR_WS.readyState === 1) {
+          window.MIRROR_WS.send(JSON.stringify({ type: "spotify_state", payload: j }));
+        }
+      })
+      .catch(()=>{});
+  }, 7000);
 </script>
 
 <script>
