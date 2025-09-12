@@ -200,7 +200,7 @@
       body
     });
     if (window.MIRROR_WS && window.MIRROR_WS.readyState === 1) {
-      window.MIRROR_WS.send(JSON.stringify({ type: 'time_pref', use_24h: !!checked }));
+      window.MIRROR_WS.send(JSON.stringify({ ty77pe: 'time_pref', use_24h: !!checked }));
     }
     prefStatus.textContent = 'Saved'; setTimeout(()=> prefStatus.textContent = '', 1200);
   }
