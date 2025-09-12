@@ -91,6 +91,12 @@ header {
     margin-top: 20px;
     opacity: 0;
     animation: fadeIn 2s ease-in forwards;
+
+    
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    text-align: center;
 }
 
 @keyframes fadeIn {
