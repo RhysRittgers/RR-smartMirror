@@ -85,19 +85,13 @@ header {
 }
 
 /* CUSTOM MESSAGE */
+/* Center the custom message inside the middle grid column */
 .message-container {
-    font-size: 1.8rem;
-    font-style: italic;
-    margin-top: 20px;
-    opacity: 0;
-    animation: fadeIn 2s ease-in forwards;
-
-    
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    text-align: center;
+  justify-self: center;   /* center the grid item within its cell */
+  text-align: center;     /* center the text inside the item */
+  width: max-content;     /* shrink to text width so centering is exact */
 }
+
 
 @keyframes fadeIn {
     from {
