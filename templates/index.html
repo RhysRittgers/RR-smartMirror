@@ -130,18 +130,8 @@
     const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
     mirrorSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-
-      // ✅ ALSO handle time-pref messages on this same socket
-      if (data && data.type === 'time_pref') {
-        window.USE_24H = !!data.use_24h;
-        if (typeof updateClock === 'function') updateClock();
-        reformatAllEventTimes();
-        return;
-      }
-
-      // Existing message handling (custom mirror message)
       const msgEl = document.getElementById("mirror-message");
-      if (msgEl && data && typeof data.message !== 'undefined') {
+      if (msgEl) {
         msgEl.innerText = data.message;
         msgEl.classList.add("flash");
         setTimeout(() => msgEl.classList.remove("flash"), 500);
@@ -207,7 +197,21 @@
       priceDiv.innerHTML = `$${stock.price.toFixed(2)} <span class="${up?'up':'down'}">${up?'▲':'▼'}</span>`;
     }
 
-    /* (Removed separate /ws/settings/ socket; we now handle time_pref above) */
+    // Settings WS (live time-format push)
+    (function(){
+      const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
+      const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'time_pref') {
+            window.USE_24H = !!msg.use_24h;
+            if (typeof updateClock === 'function') updateClock();
+            reformatAllEventTimes();
+          }
+        } catch (_) {}
+      };
+    })();
   }
 
   document.addEventListener("DOMContentLoaded", () => {
