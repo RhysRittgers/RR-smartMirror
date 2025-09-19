@@ -95,3 +95,5 @@ def time_format(request):
         )
 
     return JsonResponse({"use_24h": prefs.use_24h})
+
+#please work
