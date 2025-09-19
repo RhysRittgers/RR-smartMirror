@@ -197,20 +197,26 @@
       priceDiv.innerHTML = `$${stock.price.toFixed(2)} <span class="${up?'up':'down'}">${up?'▲':'▼'}</span>`;
     }
 
-    // Settings WS (live time-format push)
+        // Settings WS (live time-format push) — with auto-reconnect
     (function(){
       const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-      const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
-      ws.onmessage = (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.type === 'time_pref') {
-            window.USE_24H = !!msg.use_24h;
-            if (typeof updateClock === 'function') updateClock();
-            reformatAllEventTimes();
-          }
-        } catch (_) {}
-      };
+      let ws;
+      function connect(){
+        ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
+        ws.onmessage = (e) => {
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'time_pref') {
+              window.USE_24H = !!msg.use_24h;
+              if (typeof updateClock === 'function') updateClock();
+              reformatAllEventTimes();
+            }
+          } catch (_) {}
+        };
+        ws.onclose = () => { setTimeout(connect, 2000); };
+        ws.onerror = () => { try { ws.close(); } catch(_){} };
+      }
+      connect();
     })();
   }
 
