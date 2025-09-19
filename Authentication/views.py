@@ -71,14 +71,27 @@ def logout_view(request):
 def time_format(request):
     """Stores user time preference and broadcasts it live via Channels."""
     prefs, _ = UserPreference.objects.get_or_create(user=request.user)
+
     if request.method == "POST":
-        val = str(request.POST.get("use_24h", "")).lower()
-        prefs.use_24h = val in ("1", "true", "yes", "on")
+        use_24h = False
+        try:
+            # Try to parse JSON body
+            data = json.loads(request.body.decode("utf-8"))
+            if isinstance(data, dict):
+                use_24h = bool(data.get("use_24h", False))
+        except Exception:
+            # Fallback to form POST (for backwards compatibility)
+            val = str(request.POST.get("use_24h", "")).lower()
+            use_24h = val in ("1", "true", "yes", "on")
+
+        prefs.use_24h = use_24h
         prefs.save()
+
         # broadcast to mirrors
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             "mirror_settings",
             {"type": "time_pref", "use_24h": prefs.use_24h}
         )
+
     return JsonResponse({"use_24h": prefs.use_24h})
