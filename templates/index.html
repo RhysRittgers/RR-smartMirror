@@ -129,12 +129,24 @@
     // Message WS
     const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
     mirrorSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      const msgEl = document.getElementById("mirror-message");
-      if (msgEl) {
-        msgEl.innerText = data.message;
-        msgEl.classList.add("flash");
-        setTimeout(() => msgEl.classList.remove("flash"), 500);
+      let data;
+      try { data = JSON.parse(event.data); } catch { return; }
+
+      // existing custom message handling
+      if (data.message) {
+        const msgEl = document.getElementById("mirror-message");
+        if (msgEl) {
+          msgEl.innerText = data.message;
+          msgEl.classList.add("flash");
+          setTimeout(() => msgEl.classList.remove("flash"), 500);
+        }
+      }
+
+      // NEW: also accept time_pref over the mirror socket
+      if (data.type === "time_pref") {
+        window.USE_24H = !!data.use_24h;
+        if (typeof updateClock === "function") updateClock();
+        if (typeof reformatAllEventTimes === "function") reformatAllEventTimes();
       }
     };
 
