@@ -4,7 +4,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Mirror Remote</title>
 
-  <!-- Apple-like system font stack (uses SF on iOS/macOS automatically) -->
   <style>
     :root{
       --bg-top: #0b0b0b;
@@ -34,18 +33,9 @@
       letter-spacing: .2px;
     }
 
-    .wrap {
-      max-width: 940px;
-      margin: 0 auto;
-      padding: 24px 18px 36px;
-    }
+    .wrap { max-width: 940px; margin: 0 auto; padding: 24px 18px 36px; }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-    }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 
     h1 {
       margin: 0;
@@ -56,15 +46,9 @@
     }
 
     .btn-ghost {
-      appearance: none;
-      border: 0;
-      background: #191919;
-      color: var(--ink);
-      padding: 10px 14px;
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      font-size: 14px;
-      line-height: 1;
+      appearance: none; border: 0; background: #191919; color: var(--ink);
+      padding: 10px 14px; border-radius: 12px; box-shadow: var(--shadow);
+      font-size: 14px; line-height: 1; cursor: pointer;
     }
 
     /* Icon grid */
@@ -75,57 +59,35 @@
       margin: 28px 0 10px;
     }
 
-    .tile {
-      display: grid;
-      place-items: center;
-      gap: 14px;
-      text-decoration: none;
-      color: inherit;
-    }
+    .tile { display: grid; place-items: center; gap: 14px; text-decoration: none; color: inherit; }
 
     .glyph {
-      width: 108px;
-      height: 108px;
-      border-radius: 999px;
+      width: 108px; height: 108px; border-radius: 999px;
       background: radial-gradient(100% 100% at 50% 0%, #222 0%, var(--panel) 60%, #181818 100%);
       box-shadow: var(--shadow);
-      display: grid;
-      place-items: center;
+      display: grid; place-items: center;
       border: 1px solid var(--ring);
       transition: transform .14s ease, filter .14s ease, background .2s ease;
     }
-
     .glyph:hover { transform: translateY(-2px); filter: brightness(1.06); }
     .glyph svg { width: 36px; height: 36px; stroke: var(--accent); }
 
-    .label {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--ink-dim);
-    }
+    .label { font-size: 16px; font-weight: 600; color: var(--ink-dim); }
 
     /* Footer pill */
-    .footer {
-      display: flex; justify-content: center; margin-top: 12px;
-    }
+    .footer { display: flex; justify-content: center; margin-top: 12px; }
     .pill {
       display: inline-flex; align-items: center; gap: 10px;
       padding: 12px 20px;
       background: linear-gradient(180deg, #1e1e1e, #181818);
-      border-radius: 999px;
-      border: 1px solid var(--ring);
-      box-shadow: var(--shadow);
-      color: var(--ink);
-      text-decoration: none;
-      font-weight: 600;
+      border-radius: 999px; border: 1px solid var(--ring); box-shadow: var(--shadow);
+      color: var(--ink); text-decoration: none; font-weight: 600;
     }
     .pill svg { width: 18px; height: 18px; stroke: var(--accent); }
 
-    /* Small helper for the Spotify brand icon so it matches the stroke set */
     .spotify-mark { width: 36px; height: 36px; }
     .spotify-mark path { fill: var(--accent); }
 
-    /* Reduce size on small screens */
     @media (max-width: 420px){
       .glyph { width: 92px; height: 92px; }
       .glyph svg, .spotify-mark { width: 30px; height: 30px; }
@@ -133,7 +95,7 @@
     }
   </style>
 
-  <!-- Lucide icons (clean professional stroke icons) -->
+  <!-- Lucide icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
@@ -143,7 +105,7 @@
       <button id="remoteLogoutBtn" class="btn-ghost">Logout</button>
     </header>
 
-    <!-- Home grid (purely cosmetic; keep your same navigation IDs/targets) -->
+    <!-- Home grid -->
     <div class="grid">
       <a href="#message" class="tile" id="nav-message">
         <div class="glyph"><i data-lucide="send"></i></div>
@@ -167,7 +129,6 @@
 
       <a href="#spotify" class="tile" id="nav-spotify">
         <div class="glyph">
-          <!-- Spotify brand mark (polished single-color SVG) -->
           <svg class="spotify-mark viewBox" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 1.5C6.21 1.5 1.5 6.21 1.5 12S6.21 22.5 12 22.5 22.5 17.79 22.5 12 17.79 1.5 12 1.5Zm4.66 14.33a.9.9 0 0 1-1.24.3c-3.4-2.08-7.7-2.55-12.26-1.39a.9.9 0 0 1-.44-1.74c5.02-1.28 9.77-.74 13.52 1.55a.9.9 0 0 1 .42 1.28Zm1.66-3.28a1 1 0 0 1-1.38.33c-3.9-2.37-9.86-3.05-14.46-1.66a1 1 0 1 1-.58-1.92c5.13-1.56 11.67-.79 16.04 1.89a1 1 0 0 1 .38 1.36Zm.13-3.38a1.1 1.1 0 0 1-1.51.37C12.5 6.03 7.03 5.5 3.04 6.71a1.1 1.1 0 1 1-.63-2.11c4.48-1.34 10.58-.76 15.3 2.01a1.1 1.1 0 0 1 .74 1.56Z"/>
           </svg>
@@ -175,7 +136,7 @@
         <div class="label">Spotify</div>
       </a>
 
-      <span class="tile"></span> <!-- spacer to balance grid -->
+      <span class="tile"></span>
     </div>
 
     <div class="footer">
@@ -186,11 +147,51 @@
     </div>
   </div>
 
-  <!-- Initialize icons (no logic changes to your app) -->
+  <!-- Initialize icons -->
   <script>
     if (window.lucide) { window.lucide.createIcons({ attrs: { 'stroke-width': 1.75, 'aria-hidden': 'true' } }); }
   </script>
 
-  <!-- Your existing JS can stay as-is below; this file doesn’t change any logic. -->
+  <!-- === ORIGINAL AUTO-LOGIN + LOGOUT (unchanged) === -->
+  <script>
+    // from your working mobile_dashboard.html
+    function getCookie(name){
+      const v = document.cookie.split('; ').find(r=>r.startsWith(name+'='));
+      return v ? decodeURIComponent(v.split('=')[1]) : '';
+    }
+
+    // Bootstrap the mirror login WS so the mirror side auto-auths
+    window.addEventListener("DOMContentLoaded", () => {
+      fetch("/auth/generate-token/")
+        .then(res => res.json())
+        .then(data => {
+          const loginSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror-login/");
+          window.MIRROR_WS = loginSocket;
+          loginSocket.onopen = () => {
+            loginSocket.send(JSON.stringify({ type: "send_token_to_mirror", token: data.token }));
+            // Let other scripts know the mirror socket is ready
+            window.dispatchEvent(new Event("MIRROR_WS_READY"));
+          };
+          loginSocket.onclose = () => { window.MIRROR_WS = null; };
+        })
+        .catch(err => console.error("❌ Error generating token:", err));
+    });
+
+    // Exact logout you had before
+    async function secureLogout() {
+      const res = await fetch("/auth/csrf/", { credentials: "include", cache: "no-store" });
+      const { csrfToken } = await res.json();
+      fetch("/auth/logout/", {
+        method: "POST",
+        headers: { "X-CSRFToken": csrfToken },
+        credentials: "include",
+        cache: "no-store"
+      }).then(() => { window.location.href = "/auth/login/"; });
+    }
+    document.getElementById("remoteLogoutBtn")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      secureLogout();
+    });
+  </script>
 </body>
 </html>
