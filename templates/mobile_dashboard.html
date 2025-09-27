@@ -193,5 +193,48 @@
       secureLogout();
     });
   </script>
+
+  <script>
+  // Map each tile to its real page. Edit these paths if your app uses different URLs.
+  const ROUTES = {
+    message:  ["/remote/message/",  "/mobile/message/",  "/Message/"],
+    calendar: ["/remote/calendar/", "/mobile/calendar/", "/Calendar/"],
+    system:   ["/remote/system/",   "/mobile/system/",   "/System/"],
+    stocks:   ["/remote/stocks/",   "/mobile/stocks/",   "/Stocks/"],
+    spotify:  ["/remote/spotify/",  "/mobile/spotify/",  "/Spotify/"],
+    share:    ["/remote/share/",    "/mobile/share/",    "/Share/"],
+  };
+
+  function pickRoute(name) {
+    const options = ROUTES[name] || [];
+    return options[0] || "#";
+  }
+
+  function wireNav(anchorId, name) {
+    const el = document.getElementById(anchorId);
+    if (!el) return;
+    const url = pickRoute(name);
+
+    // Set a real href so long-press / open-in-new-tab works too
+    el.setAttribute("href", url);
+
+    // Ensure navigation even if something prevents default
+    el.addEventListener("click", (e) => {
+      if (url.startsWith("#")) return; // keep default hash behavior if you want it
+      e.preventDefault();
+      window.location.assign(url);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    wireNav("nav-message",  "message");
+    wireNav("nav-calendar", "calendar");
+    wireNav("nav-system",   "system");
+    wireNav("nav-stocks",   "stocks");
+    wireNav("nav-spotify",  "spotify");
+    wireNav("nav-share",    "share");
+  });
+</script>
+
 </body>
 </html>
