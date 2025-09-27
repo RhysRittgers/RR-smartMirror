@@ -154,7 +154,6 @@
 
   <!-- === ORIGINAL AUTO-LOGIN + LOGOUT (unchanged) === -->
   <script>
-    // from your working mobile_dashboard.html
     function getCookie(name){
       const v = document.cookie.split('; ').find(r=>r.startsWith(name+'='));
       return v ? decodeURIComponent(v.split('=')[1]) : '';
@@ -169,7 +168,6 @@
           window.MIRROR_WS = loginSocket;
           loginSocket.onopen = () => {
             loginSocket.send(JSON.stringify({ type: "send_token_to_mirror", token: data.token }));
-            // Let other scripts know the mirror socket is ready
             window.dispatchEvent(new Event("MIRROR_WS_READY"));
           };
           loginSocket.onclose = () => { window.MIRROR_WS = null; };
@@ -177,7 +175,6 @@
         .catch(err => console.error("❌ Error generating token:", err));
     });
 
-    // Exact logout you had before
     async function secureLogout() {
       const res = await fetch("/auth/csrf/", { credentials: "include", cache: "no-store" });
       const { csrfToken } = await res.json();
@@ -194,47 +191,54 @@
     });
   </script>
 
+  <!-- === ROUTING FIX: try known paths in order and go to the first that exists === -->
   <script>
-  // Map each tile to its real page. Edit these paths if your app uses different URLs.
-  const ROUTES = {
-    message:  ["/remote/message/",  "/mobile/message/",  "/Message/"],
-    calendar: ["/remote/calendar/", "/mobile/calendar/", "/Calendar/"],
-    system:   ["/remote/system/",   "/mobile/system/",   "/System/"],
-    stocks:   ["/remote/stocks/",   "/mobile/stocks/",   "/Stocks/"],
-    spotify:  ["/remote/spotify/",  "/mobile/spotify/",  "/Spotify/"],
-    share:    ["/remote/share/",    "/mobile/share/",    "/Share/"],
-  };
+    // Put the paths you *know* work earlier in each list.
+    // I’ve moved your capitalized endpoints up since those looked live in your app.
+    const ROUTES = {
+      message:  ["/Message/",  "/mobile/message/",  "/remote/message/"],
+      calendar: ["/Calendar/", "/mobile/calendar/", "/remote/calendar/"],
+      system:   ["/System/",   "/mobile/system/",   "/remote/system/"],
+      stocks:   ["/Stocks/",   "/mobile/stocks/",   "/remote/stocks/"],
+      spotify:  ["/Spotify/",  "/mobile/spotify/",  "/remote/spotify/"],
+      share:    ["/Share/",    "/mobile/share/",    "/remote/share/"],
+    };
 
-  function pickRoute(name) {
-    const options = ROUTES[name] || [];
-    return options[0] || "#";
-  }
+    async function resolveRoute(name){
+      const options = ROUTES[name] || [];
+      for (const url of options){
+        try{
+          const res = await fetch(url, { method: "HEAD", credentials: "include", cache: "no-store" });
+          if (res.ok) return url;
+        }catch(_){}
+      }
+      // fallback to first option even if HEAD blocked by server config
+      return options[0] || "#";
+    }
 
-  function wireNav(anchorId, name) {
-    const el = document.getElementById(anchorId);
-    if (!el) return;
-    const url = pickRoute(name);
+    function wireNav(anchorId, name){
+      const el = document.getElementById(anchorId);
+      if (!el) return;
 
-    // Set a real href so long-press / open-in-new-tab works too
-    el.setAttribute("href", url);
+      // give a harmless placeholder href so long-press works
+      el.setAttribute("href", "#");
 
-    // Ensure navigation even if something prevents default
-    el.addEventListener("click", (e) => {
-      if (url.startsWith("#")) return; // keep default hash behavior if you want it
-      e.preventDefault();
-      window.location.assign(url);
+      el.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const url = await resolveRoute(name);
+        if (url && url !== "#") window.location.assign(url);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      wireNav("nav-message",  "message");
+      wireNav("nav-calendar", "calendar");
+      wireNav("nav-system",   "system");
+      wireNav("nav-stocks",   "stocks");
+      wireNav("nav-spotify",  "spotify");
+      wireNav("nav-share",    "share");
     });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    wireNav("nav-message",  "message");
-    wireNav("nav-calendar", "calendar");
-    wireNav("nav-system",   "system");
-    wireNav("nav-stocks",   "stocks");
-    wireNav("nav-spotify",  "spotify");
-    wireNav("nav-share",    "share");
-  });
-</script>
+  </script>
 
 </body>
 </html>
