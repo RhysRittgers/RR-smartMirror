@@ -35,33 +35,25 @@
 
     .wrap { max-width: 940px; margin: 0 auto; padding: 24px 18px 36px; }
 
+    /* Header */
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-
-    h1 {
-      margin: 0;
-      font-weight: 600;
-      font-size: clamp(22px, 4.6vw, 32px);
-      letter-spacing: .4px;
-      color: var(--accent);
-    }
-
+    h1 { margin: 0; font-weight: 600; font-size: clamp(22px, 4.6vw, 32px); letter-spacing: .4px; color: var(--accent); }
     .btn-ghost {
       appearance: none; border: 0; background: #191919; color: var(--ink);
       padding: 10px 14px; border-radius: 12px; box-shadow: var(--shadow);
       font-size: 14px; line-height: 1; cursor: pointer;
     }
 
-    /* Icon grid */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 26px 24px;
-      margin: 28px 0 10px;
-    }
+    /* Page containers (same multi-page behavior as your working version) */
+    .page{display:none;animation:fade .18s ease-out}
+    .page.active{display:block}
+    @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-    .tile { display: grid; place-items: center; gap: 14px; text-decoration: none; color: inherit; }
+    /* Home grid */
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px 24px; margin: 28px 0 10px; }
+    .tile { display: grid; place-items: center; gap: 14px; text-decoration: none; color: inherit; cursor: pointer; }
 
-    .glyph {
+    .circle.glyph {
       width: 108px; height: 108px; border-radius: 999px;
       background: radial-gradient(100% 100% at 50% 0%, #222 0%, var(--panel) 60%, #181818 100%);
       box-shadow: var(--shadow);
@@ -69,9 +61,8 @@
       border: 1px solid var(--ring);
       transition: transform .14s ease, filter .14s ease, background .2s ease;
     }
-    .glyph:hover { transform: translateY(-2px); filter: brightness(1.06); }
-    .glyph svg { width: 36px; height: 36px; stroke: var(--accent); }
-
+    .tile:active .glyph { transform: scale(.98); }
+    .glyph svg, .glyph i { width: 36px; height: 36px; stroke: var(--accent); }
     .label { font-size: 16px; font-weight: 600; color: var(--ink-dim); }
 
     /* Footer pill */
@@ -82,15 +73,27 @@
       background: linear-gradient(180deg, #1e1e1e, #181818);
       border-radius: 999px; border: 1px solid var(--ring); box-shadow: var(--shadow);
       color: var(--ink); text-decoration: none; font-weight: 600;
+      cursor: pointer;
     }
-    .pill svg { width: 18px; height: 18px; stroke: var(--accent); }
 
-    .spotify-mark { width: 36px; height: 36px; }
-    .spotify-mark path { fill: var(--accent); }
+    /* Back bar + cards, keeping your IDs/flows */
+    .backbar{display:flex;align-items:center;gap:10px;margin:8px 0 18px}
+    .back-btn{background:#141311;border:1px solid rgba(255,255,255,.08);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
+    .section-title{font-size:22px;font-weight:700;letter-spacing:.4px;flex:1;opacity:.95;text-align:center}
+
+    .card{background:#141311;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin:12px 0}
+    input, textarea, button, select{font:inherit;color:var(--ink)}
+    input[type="text"], input[type="date"], input[type="time"], textarea{
+      width:100%;box-sizing:border-box;background:#0f0e0c;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px;margin:6px 0 12px
+    }
+    button.primary{background:#22201d;border:1px solid rgba(255,255,255,.18);padding:12px 16px;border-radius:12px;cursor:pointer;color:var(--ink)}
+
+    .row{display:flex;align-items:center;gap:10px}
+    small.muted{color:var(--ink-muted)}
 
     @media (max-width: 420px){
-      .glyph { width: 92px; height: 92px; }
-      .glyph svg, .spotify-mark { width: 30px; height: 30px; }
+      .circle.glyph { width: 92px; height: 92px; }
+      .glyph svg { width: 30px; height: 30px; }
       .label { font-size: 15px; }
     }
   </style>
@@ -99,146 +102,316 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Smart Mirror Remote</h1>
-      <button id="remoteLogoutBtn" class="btn-ghost">Logout</button>
-    </header>
+<div class="wrap">
 
-    <!-- Home grid -->
+  <!-- App Bar -->
+  <header class="appbar">
+    <h1>Smart Mirror Remote</h1>
+    <button id="remoteLogoutBtn" class="btn-ghost">Logout</button>
+  </header>
+
+  <!-- ================== HOME (icon grid) ================== -->
+  <section id="page-home" class="page active">
     <div class="grid">
-      <a href="#message" class="tile" id="nav-message">
-        <div class="glyph"><i data-lucide="send"></i></div>
+      <a class="tile" data-goto="page-message">
+        <div class="circle glyph"><i data-lucide="send"></i></div>
         <div class="label">Message</div>
       </a>
-
-      <a href="#calendar" class="tile" id="nav-calendar">
-        <div class="glyph"><i data-lucide="calendar-days"></i></div>
+      <a class="tile" data-goto="page-calendar">
+        <div class="circle glyph"><i data-lucide="calendar-days"></i></div>
         <div class="label">Calendar</div>
       </a>
-
-      <a href="#system" class="tile" id="nav-system">
-        <div class="glyph"><i data-lucide="settings"></i></div>
+      <a class="tile" data-goto="page-system">
+        <div class="circle glyph"><i data-lucide="settings"></i></div>
         <div class="label">System</div>
       </a>
-
-      <a href="#stocks" class="tile" id="nav-stocks">
-        <div class="glyph"><i data-lucide="trending-up"></i></div>
+      <a class="tile" data-goto="page-stocks">
+        <div class="circle glyph"><i data-lucide="trending-up"></i></div>
         <div class="label">Stocks</div>
       </a>
-
-      <a href="#spotify" class="tile" id="nav-spotify">
-        <div class="glyph">
-          <svg class="spotify-mark viewBox" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 1.5C6.21 1.5 1.5 6.21 1.5 12S6.21 22.5 12 22.5 22.5 17.79 22.5 12 17.79 1.5 12 1.5Zm4.66 14.33a.9.9 0 0 1-1.24.3c-3.4-2.08-7.7-2.55-12.26-1.39a.9.9 0 0 1-.44-1.74c5.02-1.28 9.77-.74 13.52 1.55a.9.9 0 0 1 .42 1.28Zm1.66-3.28a1 1 0 0 1-1.38.33c-3.9-2.37-9.86-3.05-14.46-1.66a1 1 0 1 1-.58-1.92c5.13-1.56 11.67-.79 16.04 1.89a1 1 0 0 1 .38 1.36Zm.13-3.38a1.1 1.1 0 0 1-1.51.37C12.5 6.03 7.03 5.5 3.04 6.71a1.1 1.1 0 1 1-.63-2.11c4.48-1.34 10.58-.76 15.3 2.01a1.1 1.1 0 0 1 .74 1.56Z"/>
-          </svg>
-        </div>
+      <a class="tile" data-goto="page-spotify">
+        <div class="circle glyph"><i data-lucide="music-3"></i></div>
         <div class="label">Spotify</div>
       </a>
-
-      <span class="tile"></span>
+      <div class="tile" style="visibility:hidden">
+        <div class="circle glyph"></div>
+        <div class="label">&nbsp;</div>
+      </div>
     </div>
 
     <div class="footer">
-      <a href="#share" class="pill" id="nav-share">
+      <a class="pill" data-goto="page-share">
         <i data-lucide="share-2"></i>
         Share
       </a>
     </div>
-  </div>
+  </section>
 
-  <!-- Initialize icons -->
-  <script>
-    if (window.lucide) { window.lucide.createIcons({ attrs: { 'stroke-width': 1.75, 'aria-hidden': 'true' } }); }
-  </script>
+  <!-- ================== MESSAGE PAGE ================== -->
+  <section id="page-message" class="page">
+    <div class="backbar">
+      <button class="back-btn" data-goto="page-home">← Home</button>
+      <div class="section-title">Message</div>
+    </div>
+    <div class="card">
+      <form id="messageForm">
+        <input type="text" name="message" placeholder="New message" required>
+        <button class="primary" type="submit">Send</button>
+      </form>
+    </div>
+  </section>
 
-  <!-- === ORIGINAL AUTO-LOGIN + LOGOUT (unchanged) === -->
-  <script>
-    function getCookie(name){
-      const v = document.cookie.split('; ').find(r=>r.startsWith(name+'='));
-      return v ? decodeURIComponent(v.split('=')[1]) : '';
-    }
+  <!-- ================== CALENDAR PAGE ================== -->
+  <section id="page-calendar" class="page">
+    <div class="backbar">
+      <button class="back-btn" data-goto="page-home">← Home</button>
+      <div class="section-title">Calendar</div>
+    </div>
+    <div class="card">
+      <form id="calendarForm">
+        <input type="text" name="event_name" placeholder="Event Name" required>
+        <input type="date" name="event_date" required>
+        <input type="time" name="event_time">
+        <textarea name="event_description" placeholder="Event Description (optional)"></textarea>
+        <button class="primary" type="submit">Add Event</button>
+      </form>
+    </div>
+  </section>
 
-    // Bootstrap the mirror login WS so the mirror side auto-auths
-    window.addEventListener("DOMContentLoaded", () => {
-      fetch("/auth/generate-token/")
-        .then(res => res.json())
-        .then(data => {
-          const loginSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror-login/");
-          window.MIRROR_WS = loginSocket;
-          loginSocket.onopen = () => {
-            loginSocket.send(JSON.stringify({ type: "send_token_to_mirror", token: data.token }));
-            window.dispatchEvent(new Event("MIRROR_WS_READY"));
-          };
-          loginSocket.onclose = () => { window.MIRROR_WS = null; };
-        })
-        .catch(err => console.error("❌ Error generating token:", err));
+  <!-- ================== SYSTEM / SETTINGS PAGE ================== -->
+  <section id="page-system" class="page">
+    <div class="backbar">
+      <button class="back-btn" data-goto="page-home">← Home</button>
+      <div class="section-title">System</div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px">Settings</h3>
+      <div class="row" style="justify-content:space-between">
+        <label for="pref-24h" class="row" style="cursor:pointer">
+          <input type="checkbox" id="pref-24h">
+          <span>Use 24-hour time</span>
+        </label>
+        <small id="pref-save-status" class="muted"></small>
+      </div>
+      <small class="muted">Controls how the mirror displays the clock and event times.</small>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px">Session</h3>
+      <button id="remoteLogoutBtn_clone" class="primary" style="width:100%">Logout</button>
+    </div>
+  </section>
+
+  <!-- ================== STOCKS PAGE (placeholder UI only) ================== -->
+  <section id="page-stocks" class="page">
+    <div class="backbar">
+      <button class="back-btn" data-goto="page-home">← Home</button>
+      <div class="section-title">Stocks</div>
+    </div>
+    <div class="card">
+      <small class="muted">(Your existing live stocks logic remains unchanged elsewhere.)</small>
+    </div>
+  </section>
+
+  <!-- ================== SPOTIFY PAGE ================== -->
+  <section id="page-spotify" class="page">
+    <div class="backbar">
+      <button class="back-btn" data-goto="page-home">← Home</button>
+      <div class="section-title">Spotify</div>
+    </div>
+
+    <div class="card">
+      <p><a href="/spotify/login/" style="color:var(--accent)">Connect Spotify</a></p>
+      <div class="row" style="flex-wrap:wrap;gap:10px">
+        <button id="sp-prev"  class="primary">Prev</button>
+        <button id="sp-play"  class="primary">Play</button>
+        <button id="sp-pause" class="primary">Pause</button>
+        <button id="sp-next"  class="primary">Next</button>
+      </div>
+      <div style="margin-top:12px">Volume</div>
+      <input id="sp-vol" type="range" min="0" max="100" value="50">
+      <pre id="sp-state" style="background:#0f0e0c;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px;white-space:pre-wrap"></pre>
+    </div>
+  </section>
+
+  <!-- ================== SHARE PAGE (visual only) ================== -->
+  <section id="page-share" class="page">
+    <div class="backbar">
+      <button class="back-btn" data-goto="page-home">← Home</button>
+      <div class="section-title">Share</div>
+    </div>
+    <div class="card">
+      <small class="muted">(Place any share controls/content here if you add them later.)</small>
+    </div>
+  </section>
+
+</div>
+
+<!-- Initialize icons -->
+<script>
+  if (window.lucide) { window.lucide.createIcons({ attrs: { 'stroke-width': 1.75, 'aria-hidden': 'true' } }); }
+</script>
+
+<!-- =============== NAV JS (same multi-page behavior) =============== -->
+<script>
+  const pages = Array.from(document.querySelectorAll('.page'));
+  function show(id){
+    pages.forEach(p => p.classList.toggle('active', p.id === id));
+    // keep both logout buttons in sync
+    const mainLogout = document.getElementById('remoteLogoutBtn');
+    const cloneLogout = document.getElementById('remoteLogoutBtn_clone');
+    if (cloneLogout && mainLogout) cloneLogout.onclick = mainLogout.onclick;
+  }
+  document.addEventListener('click', (e)=>{
+    const t = e.target.closest('[data-goto]');
+    if (!t) return;
+    e.preventDefault();
+    show(t.getAttribute('data-goto'));
+  });
+</script>
+
+<!-- ==================== YOUR EXISTING JS (UNCHANGED) ==================== -->
+<script>
+  function getCookie(name){
+    const v = document.cookie.split('; ').find(r=>r.startsWith(name+'='));
+    return v ? decodeURIComponent(v.split('=')[1]) : '';
+  }
+
+  // ----- MIRROR socket bootstrap (used for time-pref + spotify relays)
+  window.addEventListener("DOMContentLoaded", () => {
+    fetch("/auth/generate-token/")
+      .then(res => res.json())
+      .then(data => {
+        const loginSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror-login/");
+        window.MIRROR_WS = loginSocket;
+        loginSocket.onopen = () => {
+          loginSocket.send(JSON.stringify({ type: "send_token_to_mirror", token: data.token }));
+          window.dispatchEvent(new Event("MIRROR_WS_READY"));
+        };
+        loginSocket.onclose = () => { window.MIRROR_WS = null; };
+      })
+      .catch(err => console.error("❌ Error generating token:", err));
+  });
+
+  // ----- Spotify controls (and forward state to mirror)
+  async function ctrl(action, qs=''){
+    const res = await fetch(`/spotify/control/${action}/${qs}`, {
+      method: 'POST',
+      headers: {'X-CSRFToken': getCookie('csrftoken')},
+      credentials: 'include',
+      cache: 'no-store'
     });
+    const j = await res.json().catch(()=>({}));
+    try { document.getElementById('sp-state').textContent = JSON.stringify(j.state||j, null, 2); } catch(e){}
 
-    async function secureLogout() {
-      const res = await fetch("/auth/csrf/", { credentials: "include", cache: "no-store" });
-      const { csrfToken } = await res.json();
-      fetch("/auth/logout/", {
-        method: "POST",
-        headers: { "X-CSRFToken": csrfToken },
-        credentials: "include",
-        cache: "no-store"
-      }).then(() => { window.location.href = "/auth/login/"; });
+    const payload = j.state || null;
+    if (payload && window.MIRROR_WS && window.MIRROR_WS.readyState === 1) {
+      window.MIRROR_WS.send(JSON.stringify({ type: "spotify_state", payload }));
     }
-    document.getElementById("remoteLogoutBtn")?.addEventListener("click", (e) => {
+  }
+
+  document.getElementById('sp-prev').onclick  = ()=>ctrl('prev');
+  document.getElementById('sp-play').onclick  = ()=>ctrl('play');
+  document.getElementById('sp-pause').onclick = ()=>ctrl('pause');
+  document.getElementById('sp-next').onclick  = ()=>ctrl('next');
+  document.getElementById('sp-vol').oninput   = (e)=>ctrl('volume', `?v=${e.target.value}`);
+
+  fetch('/spotify/state/', {credentials:'include'})
+    .then(r=>r.json()).then(j=>{
+      document.getElementById('sp-state').textContent = JSON.stringify(j, null, 2);
+      const forward = () => {
+        if (window.MIRROR_WS && window.MIRROR_WS.readyState === 1) {
+          window.MIRROR_WS.send(JSON.stringify({ type: "spotify_state", payload: j }));
+        }
+      };
+      forward();
+      if (!window.MIRROR_WS || window.MIRROR_WS.readyState !== 1) {
+        window.addEventListener("MIRROR_WS_READY", forward, { once: true });
+      }
+    });
+</script>
+
+<script>
+  // Message form
+  document.getElementById("messageForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const message = e.target.message.value.trim();
+    fetch("https://mirror.rr-smartmirror.com/Message/update-message/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ message }),
+      credentials: "include",
+      cache: "no-store"
+    }).then(r=>r.json()).then(()=> alert("Message sent!")).catch(err=>alert(err.message));
+  });
+
+  // Calendar form
+  document.getElementById("calendarForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const body = new URLSearchParams({
+      event_name: form.event_name.value,
+      event_date: form.event_date.value,
+      event_time: form.event_time.value,
+      event_description: form.event_description.value
+    });
+    fetch("https://mirror.rr-smartmirror.com/Calendar/add-event/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+      credentials: "include",
+      cache: "no-store"
+    }).then(r=>r.json()).then(()=> alert("Event saved!")).catch(err=>alert(err.message));
+  });
+
+  // Logout (exactly the same; wired to both buttons)
+  async function secureLogout() {
+    const res = await fetch("/auth/csrf/", { credentials: "include", cache: "no-store" });
+    const { csrfToken } = await res.json();
+    fetch("/auth/logout/", {
+      method: "POST",
+      headers: { "X-CSRFToken": csrfToken },
+      credentials: "include",
+      cache: "no-store"
+    }).then(() => { window.location.href = "/auth/login/"; });
+  }
+  document.getElementById("remoteLogoutBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    secureLogout();
+  });
+  if (document.getElementById("remoteLogoutBtn_clone")) {
+    document.getElementById("remoteLogoutBtn_clone").addEventListener("click", (e) => {
       e.preventDefault();
       secureLogout();
     });
-  </script>
+  }
 
-  <!-- === ROUTING FIX: try known paths in order and go to the first that exists === -->
-  <script>
-    // Put the paths you *know* work earlier in each list.
-    // I’ve moved your capitalized endpoints up since those looked live in your app.
-    const ROUTES = {
-      message:  ["/Message/",  "/mobile/message/",  "/remote/message/"],
-      calendar: ["/Calendar/", "/mobile/calendar/", "/remote/calendar/"],
-      system:   ["/System/",   "/mobile/system/",   "/remote/system/"],
-      stocks:   ["/Stocks/",   "/mobile/stocks/",   "/remote/stocks/"],
-      spotify:  ["/Spotify/",  "/mobile/spotify/",  "/remote/spotify/"],
-      share:    ["/Share/",    "/mobile/share/",    "/remote/share/"],
-    };
-
-    async function resolveRoute(name){
-      const options = ROUTES[name] || [];
-      for (const url of options){
-        try{
-          const res = await fetch(url, { method: "HEAD", credentials: "include", cache: "no-store" });
-          if (res.ok) return url;
-        }catch(_){}
-      }
-      // fallback to first option even if HEAD blocked by server config
-      return options[0] || "#";
-    }
-
-    function wireNav(anchorId, name){
-      const el = document.getElementById(anchorId);
-      if (!el) return;
-
-      // give a harmless placeholder href so long-press works
-      el.setAttribute("href", "#");
-
-      el.addEventListener("click", async (e) => {
-        e.preventDefault();
-        const url = await resolveRoute(name);
-        if (url && url !== "#") window.location.assign(url);
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      wireNav("nav-message",  "message");
-      wireNav("nav-calendar", "calendar");
-      wireNav("nav-system",   "system");
-      wireNav("nav-stocks",   "stocks");
-      wireNav("nav-spotify",  "spotify");
-      wireNav("nav-share",    "share");
+  // Settings save + live push
+  const prefCheckbox = document.getElementById('pref-24h');
+  const prefStatus = document.getElementById('pref-save-status');
+  async function loadTimePref() {
+    const r = await fetch('/auth/settings/time-format/', { credentials: 'include', cache: 'no-store' });
+    const j = await r.json(); prefCheckbox.checked = !!j.use_24h;
+  }
+  async function saveTimePref(checked) {
+    prefStatus.textContent = 'Saving…';
+    const body = new URLSearchParams({ use_24h: checked ? '1' : '0' });
+    await fetch('/auth/settings/time-format/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': getCookie('csrftoken') },
+      credentials: 'include',
+      cache: 'no-store',
+      body
     });
-  </script>
+    if (window.MIRROR_WS && window.MIRROR_WS.readyState === 1) {
+      window.MIRROR_WS.send(JSON.stringify({ type: 'time_pref', use_24h: !!checked }));
+    }
+    prefStatus.textContent = 'Saved'; setTimeout(()=> prefStatus.textContent = '', 1200);
+  }
+  loadTimePref();
+  prefCheckbox.addEventListener('change', e => saveTimePref(e.target.checked));
+</script>
 
 </body>
 </html>
