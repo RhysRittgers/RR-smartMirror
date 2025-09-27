@@ -133,10 +133,11 @@
         <div class="circle glyph"><i data-lucide="music-3"></i></div>
         <div class="label">Spotify</div>
       </a>
-      <div class="tile" style="visibility:hidden">
-        <div class="circle glyph"></div>
-        <div class="label">&nbsp;</div>
-      </div>
+      <!-- NEW: Weather tile (fills the 6th spot, bottom-right) -->
+      <a class="tile" data-goto="page-weather">
+        <div class="circle glyph"><i data-lucide="cloud-sun"></i></div>
+        <div class="label">Weather</div>
+      </a>
     </div>
 
     <div class="footer">
@@ -232,6 +233,17 @@
       <div style="margin-top:12px">Volume</div>
       <input id="sp-vol" type="range" min="0" max="100" value="50">
       <pre id="sp-state" style="background:#0f0e0c;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px;white-space:pre-wrap"></pre>
+    </div>
+  </section>
+
+  <!-- ================== WEATHER PAGE (placeholder UI only) ================== -->
+  <section id="page-weather" class="page">
+    <div class="backbar">
+      <button class="back-btn" data-goto="page-home">← Home</button>
+      <div class="section-title">Weather</div>
+    </div>
+    <div class="card">
+      <small class="muted">(Purely visual placeholder. Hook up to your existing weather controls whenever you’re ready.)</small>
     </div>
   </section>
 
