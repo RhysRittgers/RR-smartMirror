@@ -1,20 +1,23 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse 
+from django.http import HttpResponse
 
 def home(request):
     host = request.get_host()
-    print("👀 Mirror home hit. User:", request.user)
-    print("Is user authenticated?", request.user.is_authenticated)
-    print("Logged in user:", request.user)
-    print(f" 🌐 host connected: {host}")
-    
+    # print("👀 Mirror home hit. User:", request.user)
+
     if host.startswith("mirror."):
         if request.user.is_authenticated:
-            return render(request, "index.html")
+            # Use the modular layout as the LIVE mirror UI
+            return render(request, "index_modular.html")
         else:
-            return render(request, "mirror_login_waiting.html") #waiting screen when mirror connects
+            # Waiting screen when mirror connects but user not logged in yet
+            return render(request, "mirror_login_waiting.html")
     else:
-        return redirect("Dashboard:mobile_dashboard") #user remote login
-    #else:
-        #return HttpResponse("Invalid domain", status=400)
+        # Remote UI
+        return redirect("Dashboard:mobile_dashboard")
+
+@login_required
+def mirror_modular_preview(request):
+    # Leave this route for quick testing from the remote
+    return render(request, "index_modular.html")

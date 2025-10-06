@@ -1,0 +1,69 @@
+{% load dict_extras %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module Store</title>
+  <style>
+    body{margin:0;background:#0b0b0b;color:#eee;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu}
+    .wrap{max-width:960px;margin:20px auto;padding:16px}
+    h1{margin:0 0 16px 0;font-weight:600}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+    .card{background:#161616;border:1px solid #262626;border-radius:14px;padding:14px}
+    .card h3{margin:0 0 6px 0;font-size:16px}
+    .muted{opacity:.78;font-size:14px;line-height:1.4}
+    .row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:12px}
+    .btn{appearance:none;border:0;padding:8px 10px;border-radius:10px;cursor:pointer}
+    .btn.primary{background:#1e1e1e;color:#eee;border:1px solid #2a2a2a}
+    .btn.ghost{background:transparent;color:#eee;border:1px solid #2a2a2a}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #2a2a2a;font-size:12px;opacity:.85}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Module Store</h1>
+    <div class="grid">
+      {% for m in catalog %}
+        {% with um=user_modules|get_item:m.id %}
+        <div class="card">
+          <div class="row">
+            <h3>{{ m.name }}</h3>
+            <span class="pill">v{{ m.version }}</span>
+          </div>
+          <p class="muted">{{ m.description }}</p>
+          <div class="row">
+            <button class="btn primary js-toggle" data-id="{{ m.id }}">
+              {% if um %}{% if um.enabled %}Disable{% else %}Enable{% endif %}{% else %}Install{% endif %}
+            </button>
+            {% if um %}
+              <a class="btn ghost" href="#" onclick="return false;">Settings</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  </div>
+
+<script>
+  async function toggleModule(id, btn){
+    const res = await fetch(`/Dashboard/modules/${id}/toggle/`, {
+      method:"POST",
+      headers:{"X-CSRFToken": getCookie("csrftoken")},
+      credentials:"include"
+    });
+    if(!res.ok){ alert("Toggle failed: " + res.status); return; }
+    const data = await res.json();
+    btn.textContent = data.enabled ? "Disable" : "Enable";
+  }
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+  document.querySelectorAll(".js-toggle").forEach(btn => {
+    btn.addEventListener("click", () => toggleModule(btn.dataset.id, btn));
+  });
+</script>
+</body>
+</html>

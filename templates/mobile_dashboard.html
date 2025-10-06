@@ -44,7 +44,7 @@
       font-size: 14px; line-height: 1; cursor: pointer;
     }
 
-    /* Page containers (same multi-page behavior as your working version) */
+    /* Page containers */
     .page{display:none;animation:fade .18s ease-out}
     .page.active{display:block}
     @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -76,7 +76,7 @@
       cursor: pointer;
     }
 
-    /* Back bar + cards, keeping your IDs/flows */
+    /* Back bar + cards */
     .backbar{display:flex;align-items:center;gap:10px;margin:8px 0 18px}
     .back-btn{background:#141311;border:1px solid rgba(255,255,255,.08);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
     .section-title{font-size:22px;font-weight:700;letter-spacing:.4px;flex:1;opacity:.95;text-align:center}
@@ -133,17 +133,21 @@
         <div class="circle glyph"><i data-lucide="music-3"></i></div>
         <div class="label">Spotify</div>
       </a>
-      <!-- NEW: Weather tile (fills the 6th spot, bottom-right) -->
       <a class="tile" data-goto="page-weather">
         <div class="circle glyph"><i data-lucide="cloud-sun"></i></div>
         <div class="label">Weather</div>
       </a>
     </div>
 
-    <div class="footer">
-      <a class="pill" data-goto="page-share">
-        <i data-lucide="share-2"></i>
-        Share
+    <!-- NEW: Footer quick access -->
+    <div class="footer" style="gap:12px">
+      <a class="pill" data-goto="page-store">
+        <i data-lucide="store"></i>
+        Module Store
+      </a>
+      <a class="pill" data-goto="page-layout">
+        <i data-lucide="layout-template"></i>
+        Customize Layout
       </a>
     </div>
   </section>
@@ -211,7 +215,7 @@
       <div class="section-title">Stocks</div>
     </div>
     <div class="card">
-      <small class="muted">(Your existing live stocks logic remains unchanged elsewhere.)</small>
+      <small class="muted">(current place holder -> eventually will allow users to select stock ticker preferences)</small>
     </div>
   </section>
 
@@ -243,18 +247,33 @@
       <div class="section-title">Weather</div>
     </div>
     <div class="card">
-      <small class="muted">(Purely visual placeholder. Hook up to your existing weather controls whenever you’re ready.)</small>
+      <small class="muted">(current place holder -> eventually will allow users to select weather preferences)</small>
     </div>
   </section>
 
-  <!-- ================== SHARE PAGE (visual only) ================== -->
-  <section id="page-share" class="page">
+  <!-- ================== MODULE STORE PAGE ================== -->
+  <section id="page-store" class="page">
     <div class="backbar">
       <button class="back-btn" data-goto="page-home">← Home</button>
-      <div class="section-title">Share</div>
+      <div class="section-title">Module Store</div>
     </div>
+
     <div class="card">
-      <small class="muted">(Place any share controls/content here if you add them later.)</small>
+      <p>Select and manage available modules for your mirror.</p>
+      <a href="/Dashboard/store/" class="btn">Open Module Store</a>
+    </div>
+  </section>
+
+  <!-- ================== CUSTOMIZE LAYOUT PAGE ================== -->
+  <section id="page-layout" class="page">
+    <div class="backbar">
+      <button class="back-btn" data-goto="page-home">← Home</button>
+      <div class="section-title">Customize Layout</div>
+    </div>
+
+    <div class="card">
+      <p>Drag tiles to arrange your mirror. Changes save automatically.</p>
+      <a href="/mirror-modular-preview/" class="btn">Open Layout Editor</a>
     </div>
   </section>
 
@@ -265,7 +284,7 @@
   if (window.lucide) { window.lucide.createIcons({ attrs: { 'stroke-width': 1.75, 'aria-hidden': 'true' } }); }
 </script>
 
-<!-- =============== NAV JS (same multi-page behavior) =============== -->
+<!-- =============== NAV JS =============== -->
 <script>
   const pages = Array.from(document.querySelectorAll('.page'));
   function show(id){
@@ -283,14 +302,14 @@
   });
 </script>
 
-<!-- ==================== YOUR EXISTING JS (UNCHANGED) ==================== -->
+<!-- ==================== EXISTING JS ==================== -->
 <script>
   function getCookie(name){
     const v = document.cookie.split('; ').find(r=>r.startsWith(name+'='));
     return v ? decodeURIComponent(v.split('=')[1]) : '';
   }
 
-  // ----- MIRROR socket bootstrap (used for time-pref + spotify relays)
+  // ----- Mirror WS bootstrap (token relay)
   window.addEventListener("DOMContentLoaded", () => {
     fetch("/auth/generate-token/")
       .then(res => res.json())
@@ -306,7 +325,7 @@
       .catch(err => console.error("❌ Error generating token:", err));
   });
 
-  // ----- Spotify controls (and forward state to mirror)
+  // ----- Spotify controls + forward state to mirror
   async function ctrl(action, qs=''){
     const res = await fetch(`/spotify/control/${action}/${qs}`, {
       method: 'POST',
@@ -342,42 +361,8 @@
         window.addEventListener("MIRROR_WS_READY", forward, { once: true });
       }
     });
-</script>
 
-<script>
-  // Message form
-  document.getElementById("messageForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const message = e.target.message.value.trim();
-    fetch("https://mirror.rr-smartmirror.com/Message/update-message/", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ message }),
-      credentials: "include",
-      cache: "no-store"
-    }).then(r=>r.json()).then(()=> alert("Message sent!")).catch(err=>alert(err.message));
-  });
-
-  // Calendar form
-  document.getElementById("calendarForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const body = new URLSearchParams({
-      event_name: form.event_name.value,
-      event_date: form.event_date.value,
-      event_time: form.event_time.value,
-      event_description: form.event_description.value
-    });
-    fetch("https://mirror.rr-smartmirror.com/Calendar/add-event/", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
-      credentials: "include",
-      cache: "no-store"
-    }).then(r=>r.json()).then(()=> alert("Event saved!")).catch(err=>alert(err.message));
-  });
-
-  // Logout (exactly the same; wired to both buttons)
+  // Logout (wired to both buttons)
   async function secureLogout() {
     const res = await fetch("/auth/csrf/", { credentials: "include", cache: "no-store" });
     const { csrfToken } = await res.json();

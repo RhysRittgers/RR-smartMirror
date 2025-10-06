@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Smart Mirror — Modular</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <style>
+    /* 12-col CSS Grid surface */
+    #surface{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:90px;gap:14px;padding:16px}
+    .tile{background:rgba(255,255,255,0.05);border-radius:14px;padding:12px;overflow:hidden}
+    h2{margin:0 0 8px 0;font-size:18px;font-weight:600;opacity:.9}
+  </style>
+</head>
+<body>
+{% if user.is_authenticated %}
+  <div id="surface">
+    {% for um in modules %}
+      <div class="tile"
+           data-id="{{ um.id }}"
+           style="grid-column: {{ um.x|add:1 }} / span {{ um.w }}; grid-row: {{ um.y|add:1 }} / span {{ um.h }};">
+        {% include "mirror/modules/"|add:um.module.key|add:".html" with um=um %}
+      </div>
+    {% empty %}
+      <div style="color:#bbb">No modules yet. Go to <strong>Dashboard → Store</strong> and install a few.</div>
+    {% endfor %}
+  </div>
+  <script src="{% static 'js/layout.js' %}"></script>
+{% else %}
+  <div style="padding:24px;color:#eee">Please log in.</div>
+{% endif %}
+</body>
+</html>
