@@ -1,23 +1,37 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from modules.models import UserModule
 
 def home(request):
     host = request.get_host()
-    # print("👀 Mirror home hit. User:", request.user)
 
     if host.startswith("mirror."):
         if request.user.is_authenticated:
-            # Use the modular layout as the LIVE mirror UI
-            return render(request, "index_modular.html")
+            # LIVE mirror -> pass the user's enabled modules
+            modules = (
+                UserModule.objects
+                .select_related("module")
+                .filter(user=request.user, enabled=True)
+                .order_by("z", "y", "x")
+            )
+            # TEMP debug to verify in Render Logs:
+            print("MIRROR HOME -> user:", getattr(request.user, "username", None),
+                  "enabled modules:", modules.count())
+            return render(request, "index_modular.html", {"modules": modules})
         else:
-            # Waiting screen when mirror connects but user not logged in yet
             return render(request, "mirror_login_waiting.html")
-    else:
-        # Remote UI
-        return redirect("Dashboard:mobile_dashboard")
+
+    # Remote UI
+    return redirect("Dashboard:mobile_dashboard")
+
 
 @login_required
 def mirror_modular_preview(request):
-    # Leave this route for quick testing from the remote
-    return render(request, "index_modular.html")
+    # Same query as live mirror, so the preview matches what the mirror shows
+    modules = (
+        UserModule.objects
+        .select_related("module")
+        .filter(user=request.user, enabled=True)
+        .order_by("z", "y", "x")
+    )
+    return render(request, "index_modular.html", {"modules": modules})
