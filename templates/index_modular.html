@@ -10,7 +10,8 @@
     #surface{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:220px;gap:14px;padding:16px}
     .tile{background:rgba(255,255,255,0.05);border-radius:14px;padding:12px;overflow:hidden}
     h2{margin:0 0 8px 0;font-size:18px;font-weight:600;opacity:.9}
-    /* old layout cosmetics that the JS expects */
+
+    /* IDs/classes your legacy JS expects */
     .calendar-month { font-size:.95rem; opacity:.8; letter-spacing:.5px; margin:-6px 0 8px 0; }
     .day-section { margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.08); }
     .day-section.today { background:rgba(255,255,255,0.06); border-radius:8px; padding:6px 8px; }
@@ -40,103 +41,101 @@
 {% if user.is_authenticated %}
 
   <div id="surface">
-    {# Calendar #}
+    <!-- Calendar -->
     <div class="tile" style="grid-column: 1 / span 4; grid-row: 1 / span 1;">
       {% include "mirror/modules/calendar.html" %}
     </div>
 
-    {# Message #}
+    <!-- Message -->
     <div class="tile" style="grid-column: 5 / span 4; grid-row: 1 / span 1;">
       {% include "mirror/modules/message.html" %}
     </div>
 
-    {# Weather #}
+    <!-- Weather -->
     <div class="tile" style="grid-column: 9 / span 4; grid-row: 1 / span 1;">
       {% include "mirror/modules/weather.html" %}
     </div>
 
-    {# Stocks #}
+    <!-- Stocks -->
     <div class="tile" style="grid-column: 1 / span 4; grid-row: 2 / span 1;">
       {% include "mirror/modules/stocks.html" %}
     </div>
 
-    {# Spotify #}
+    <!-- Spotify -->
     <div class="tile" style="grid-column: 5 / span 4; grid-row: 2 / span 1;">
       {% include "mirror/modules/spotify.html" %}
     </div>
   </div>
 
-  {# drag/save JS (your file) #}
+  <!-- drag/save (your file) -->
   <script src="{% static 'js/layout.js' %}"></script>
 
-  {# ========= THE ORIGINAL JS (MINIMALLY ADAPTED) ========= #}
   <script>
-    /* --------- time helpers --------- */
+    /* ------------ helpers ------------ */
+    function wsUrl(path){
+      const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
+      return `${scheme}://${location.host}${path}`;
+    }
     window.USE_24H = false;
 
     function formatTimeString(hhmm) {
       if (!hhmm || hhmm === 'All day') return hhmm || '';
-      const parts = hhmm.split(':');
-      if (parts.length < 2) return hhmm;
-      let h = parseInt(parts[0], 10);
-      const mm = (parts[1] || '00').padStart(2,'0');
+      const parts = hhmm.split(':'), mm = (parts[1] || '00').padStart(2,'0');
+      let h = parseInt(parts[0] || '0', 10);
       if (window.USE_24H) return `${String(h).padStart(2,'0')}:${mm}`;
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
+      const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
       return `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
     }
     function reformatAllEventTimes() {
       document.querySelectorAll('[data-time-raw]').forEach(el => {
-        el.textContent = formatTimeString(el.getAttribute('data-time-raw'));
+        const raw = el.getAttribute('data-time-raw');
+        el.textContent = raw === 'All day' ? 'All day' : formatTimeString(raw);
       });
     }
     function getWeekStart() {
-      const now = new Date();
-      const js = now.getDay();          // 0=Sun..6=Sat
-      const offset = (js + 6) % 7;      // 0=Mon..6=Sun
+      const now = new Date(), js = now.getDay(), offset = (js + 6) % 7;
       return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
     }
     function ymd(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,'0');
-      const day = String(d.getDate()).padStart(2,'0');
+      const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
       return `${y}-${m}-${day}`;
     }
+    async function fetchJsonFirst(urls) {
+      for (const u of urls) {
+        try { const r = await fetch(u, {credentials:'include', cache:'no-store'}); if (r.ok) return await r.json(); } catch {}
+      }
+      throw new Error('All endpoints failed: ' + urls.join(', '));
+    }
 
-    /* --------- clock --------- */
+    /* ------------ clock ------------ */
     function updateClock() {
       const el = document.getElementById("digitalClock");
       if (!el) return;
-      const now = new Date();
-      const mm = String(now.getMinutes()).padStart(2,'0');
+      const now = new Date(), mm = String(now.getMinutes()).padStart(2,'0');
       if (window.USE_24H) {
         const hh = String(now.getHours()).padStart(2,'0');
         el.textContent = `${hh}:${mm}`;
       } else {
-        let h = now.getHours();
-        const ampm = h >= 12 ? 'PM' : 'AM';
-        h = h % 12 || 12;
+        let h = now.getHours(); const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
         el.textContent = `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
       }
     }
-
     async function loadTimePrefForMirror() {
       try {
         const r = await fetch('/auth/settings/time-format/', { credentials:'include', cache:'no-store' });
-        const j = await r.json();
-        window.USE_24H = !!j.use_24h;
+        const j = await r.json(); window.USE_24H = !!j.use_24h;
       } catch(e) { window.USE_24H = false; }
     }
 
-    /* --------- calendar (HTTP + live) --------- */
-    function fetchCalendarEvents() {
-      fetch('/Calendar/upcoming_events/')
-        .then(r => r.json())
-        .then(j => displayCalendarEvents(j.Week))
-        .catch(() => {
-          const el = document.getElementById('calendarEvents');
-          if (el) el.innerHTML = '<p>Calendar unavailable</p>';
-        });
+    /* ------------ calendar (HTTP + live) ------------ */
+    async function fetchCalendarEvents() {
+      try {
+        const j = await fetchJsonFirst(['/Calendar/upcoming_events/', '/Calendar/user_events/']);
+        displayCalendarEvents(j.Week);
+      } catch {
+        const el = document.getElementById('calendarEvents');
+        if (el) el.innerHTML = '<p>Calendar unavailable</p>';
+      }
     }
     function displayCalendarEvents(events) {
       const calendarDiv = document.getElementById('calendarEvents');
@@ -149,26 +148,25 @@
       const today = new Date();
       const todayName = today.toLocaleDateString('en-US', { weekday: 'long' });
 
-      monthEl.textContent = today.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+      if (monthEl) monthEl.textContent = today.toLocaleDateString('en-US', { month:'long', year:'numeric' });
 
       BASE.forEach((day, i) => {
         const d = new Date(weekStart); d.setDate(weekStart.getDate()+i);
-        const section = document.createElement('div');
-        section.className = 'day-section' + (day === todayName ? ' today' : '');
-        section.innerHTML = `
+        const sec = document.createElement('div');
+        sec.className = 'day-section' + (day === todayName ? ' today' : '');
+        sec.innerHTML = `
           <div class="day-header">
             <h3>${day}</h3>
             <span class="date-pill">${d.getDate()}</span>
           </div>
           <ul id="list-${day}"></ul>
         `;
-        calendarDiv.appendChild(section);
+        calendarDiv.appendChild(sec);
 
-        const ul = section.querySelector('ul');
+        const ul = sec.querySelector('ul');
         const raw = (events && events[day]) || [];
-        const wantYMD = ymd(d);
-        const filtered = raw.filter(ev => typeof ev === 'object' && ev.event_date === wantYMD);
-
+        const want = ymd(d);
+        const filtered = raw.filter(ev => typeof ev === 'object' && ev.event_date === want);
         if (!filtered.length) {
           const li = document.createElement('li');
           li.textContent = 'No events scheduled';
@@ -176,46 +174,42 @@
           ul.appendChild(li);
         } else {
           filtered.forEach(ev => {
-            const li = document.createElement('li');
             const isAllDay = ev.event_time === 'All day';
-            const timeHTML = isAllDay
-              ? `<span data-time-raw="All day">All day</span>`
+            const timeHTML = isAllDay ? `<span data-time-raw="All day">All day</span>`
               : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
+            const li = document.createElement('li');
             li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
             ul.appendChild(li);
           });
         }
       });
+      reformatAllEventTimes();
     }
 
-    /* --------- weather (HTTP) --------- */
-    function fetchWeather() {
-      fetch('/Weather/user_weather/')
-        .then(r => r.json())
-        .then(displayWeather)
-        .catch(() => {
-          const wrap = document.getElementById('weatherData');
-          if (wrap) wrap.innerHTML = '<p>—</p>';
-        });
+    /* ------------ weather (HTTP) ------------ */
+    async function fetchWeather(){
+      try {
+        const r = await fetch('/Weather/user_weather/', {credentials:'include', cache:'no-store'});
+        const j = await r.json(); displayWeather(j);
+      } catch {
+        const wrap = document.getElementById('weatherData');
+        if (wrap) wrap.innerHTML = '<p>—</p>';
+      }
     }
-    function displayWeather(data) {
-      const wrap = document.getElementById('weatherData');
-      if (!wrap) return;
+    function displayWeather(data){
+      const wrap = document.getElementById('weatherData'); if (!wrap) return;
       if (!data || data.error) { wrap.innerHTML = `<p>${data?.error || '—'}</p>`; return; }
-      const loc   = data.location || '';
-      const temp  = data.temperature;
-      const unit  = (data.unit || 'F')[0];
-      const cond  = data.forcast || data.forecast || '';
-      const hum   = data.humidity !== "Hidden" ? data.humidity : null;
-      const ss    = data.sunrise_sunset !== "Hidden" ? data.sunrise_sunset : null;
-      const sunrise = ss ? new Date(ss.sunrise * 1000).toLocaleTimeString() : null;
-      const sunset  = ss ? new Date(ss.sunset  * 1000).toLocaleTimeString() : null;
-
+      const loc = data.location || '', temp = data.temperature, unit = (data.unit || 'F')[0];
+      const cond = data.forcast || data.forecast || '';
+      const hum = data.humidity !== "Hidden" ? data.humidity : null;
+      const ss  = data.sunrise_sunset !== "Hidden" ? data.sunrise_sunset : null;
+      const sunrise = ss ? new Date(ss.sunrise*1000).toLocaleTimeString() : null;
+      const sunset  = ss ? new Date(ss.sunset*1000).toLocaleTimeString()  : null;
       wrap.innerHTML = `
         <div class="wx-row">
           <div class="wx-temp">${temp}<span class="wx-unit">°${unit}</span></div>
         </div>
-        <div class="wx-cond">${cond ? cond.charAt(0).toUpperCase() + cond.slice(1) : ''}</div>
+        <div class="wx-cond">${cond ? cond.charAt(0).toUpperCase()+cond.slice(1) : ''}</div>
         <div class="wx-meta">
           ${loc ? `<div class="pair"><span class="label">Location</span><span class="wx-loc">${loc}</span></div>` : ''}
           ${sunrise ? `<div class="pair"><span class="label">Sunrise</span><span>${sunrise}</span></div>` : ''}
@@ -225,67 +219,89 @@
       `;
     }
 
-    /* --------- spotify (WS + snapshot) --------- */
+    /* ------------ spotify (WS + snapshot) ------------ */
     function renderSpotify(state){
       const t = (state && state.track) || {};
       const img = document.getElementById('sp-img');
       const title = document.getElementById('sp-title');
       const artist = document.getElementById('sp-artist');
-      if (!title) return;
-
-      title.textContent = t.name || '—';
-      artist.textContent = (t.artists || []).join(', ') || '';
-      if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
+      if (title)  title.textContent  = t.name || '—';
+      if (artist) artist.textContent = (t.artists || []).join(', ') || '';
+      if (img) { if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; } }
     }
 
-    /* --------- sockets (reusing your original routes) --------- */
+    /* ------------ sockets (existing backend routes) ------------ */
     function startMirrorWebsockets() {
-      // message + time_pref on mirror socket
-      const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
-      mirrorSocket.onmessage = (event) => {
-        let data;
-        try { data = JSON.parse(event.data); } catch { return; }
-        if (data.message) {
-          const el = document.getElementById("mirror-message");
-          if (el) el.textContent = data.message || '—';
+      // message + time_pref
+      try {
+        const mirrorWS = new WebSocket(wsUrl('/ws/mirror'));
+        mirrorWS.onmessage = (e) => {
+          let data; try { data = JSON.parse(e.data) } catch { return; }
+          if (data.message) {
+            const el = document.getElementById("mirror-message");
+            if (el){ el.textContent = data.message; el.classList.add("flash"); setTimeout(()=>el.classList.remove("flash"), 500); }
+          }
+          if (data.type === "time_pref") { window.USE_24H = !!data.use_24h; updateClock(); reformatAllEventTimes(); }
+        };
+      } catch {}
+
+      // calendar
+      try {
+        const calWS = new WebSocket(wsUrl('/ws/calendar'));
+        calWS.onmessage = (e) => {
+          const data = JSON.parse(e.data || '{}'), ev = data.event;
+          if (!ev) return;
+          const evDate = new Date(`${ev.event_date}T00:00:00`);
+          const wkStart = getWeekStart(), wkEnd = new Date(wkStart); wkEnd.setDate(wkStart.getDate()+7);
+          if (evDate < wkStart || evDate >= wkEnd) return;
+          const dayName = evDate.toLocaleDateString('en-US', { weekday: 'long' });
+          const list = document.getElementById(`list-${dayName}`);
+          if (!list) { fetchCalendarEvents(); return; }
+          const ph = list.querySelector('li[data-placeholder="true"]'); if (ph) ph.remove();
+          const li = document.createElement('li');
+          const isAllDay = ev.event_time === 'All day';
+          const timeHTML = isAllDay ? `<span data-time-raw="All day">All day</span>`
+            : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
+          li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
+          list.appendChild(li);
+        };
+      } catch {}
+
+      // stocks
+      try {
+        const stocksWS = new WebSocket(wsUrl('/ws/Stocks/'));
+        const stocks = {};
+        stocksWS.onmessage = (e) => {
+          const data = JSON.parse(e.data || '{}');
+          if (data.type === 'trade' && Array.isArray(data.data)) {
+            data.data.forEach(tr => {
+              const s = tr.s, p = tr.p;
+              stocks[s] = stocks[s] || { price: p, previousPrice: p };
+              stocks[s].previousPrice = stocks[s].price;
+              stocks[s].price = p;
+              renderStock(s);
+            });
+          }
+        };
+        function renderStock(symbol){
+          const grid = document.getElementById('stocksGrid'); if (!grid) return;
+          let row = document.getElementById(`stock-${symbol}`);
+          if (!row) {
+            row = document.createElement('div');
+            row.id = `stock-${symbol}`;
+            row.className = 'stock';
+            row.innerHTML = `<div class="stock-name">${symbol}</div><div class="stock-price" id="price-${symbol}"></div>`;
+            grid.appendChild(row);
+          }
+          const priceEl = document.getElementById(`price-${symbol}`);
+          const st = stocks[symbol]; if (!priceEl || !st) return;
+          const up = st.price > st.previousPrice;
+          priceEl.innerHTML = `$${st.price.toFixed(2)} <span class="${up?'up':'down'}">${up?'▲':'▼'}</span>`;
         }
-        if (data.type === "time_pref") {
-          window.USE_24H = !!data.use_24h;
-          updateClock();
-          reformatAllEventTimes();
-        }
-      };
+      } catch {}
 
-      // calendar live add (same logic)
-      const calendarSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
-      calendarSocket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        const ev = data.event;
-        if (!ev) return;
-
-        const evDate = new Date(`${ev.event_date}T00:00:00`);
-        const wkStart = getWeekStart();
-        const wkEnd = new Date(wkStart); wkEnd.setDate(wkStart.getDate()+7);
-        if (evDate < wkStart || evDate >= wkEnd) return;
-
-        const dayName = evDate.toLocaleDateString('en-US', { weekday: 'long' });
-        const list = document.getElementById(`list-${dayName}`);
-        if (!list) { fetch('/Calendar/upcoming_events/').then(r=>r.json()).then(j=>displayCalendarEvents(j.Week)); return; }
-
-        const placeholder = list.querySelector('li[data-placeholder="true"]');
-        if (placeholder) placeholder.remove();
-
-        const li = document.createElement('li');
-        const isAllDay = ev.event_time === 'All day';
-        const timeHTML = isAllDay
-          ? `<span data-time-raw="All day">All day</span>`
-          : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
-        li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
-        list.appendChild(li);
-      };
-
-      // spotify live
-      (function(){
+      // spotify
+      try {
         const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
         const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
         ws.onmessage = (e)=>{
@@ -294,32 +310,16 @@
             if (msg.type === 'spotify_state') renderSpotify(msg.data);
           }catch(_){}
         };
-      })();
-
-      // settings (time_pref)
-      (function(){
-        const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-        const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
-        ws.onmessage = (e) => {
-          try {
-            const msg = JSON.parse(e.data);
-            if (msg.type === 'time_pref') {
-              window.USE_24H = !!msg.use_24h;
-              updateClock();
-              reformatAllEventTimes();
-            }
-          } catch (_) {}
-        };
-      })();
+      } catch {}
     }
 
-    /* --------- bootstrap --------- */
+    /* ------------ boot ------------ */
     document.addEventListener("DOMContentLoaded", () => {
-      // mini clock header (optional)
-      const header = document.createElement('div');
-      header.style.position='fixed'; header.style.top='10px'; header.style.right='14px'; header.style.opacity='.7';
-      header.innerHTML = `<span id="digitalClock">--:--</span>`;
-      document.body.appendChild(header);
+      // light header clock
+      const hdr = document.createElement('div');
+      hdr.style.position='fixed'; hdr.style.top='10px'; hdr.style.right='14px'; hdr.style.opacity='.7';
+      hdr.innerHTML = `<span id="digitalClock">--:--</span>`;
+      document.body.appendChild(hdr);
 
       startMirrorWebsockets();
       loadTimePrefForMirror().then(() => {
@@ -329,9 +329,11 @@
       fetchCalendarEvents();
       fetchWeather();
 
-      // initial spotify snapshot (may 401 if not connected)
+      // initial spotify snapshot
       fetch('/spotify/state/', {credentials:'include', cache:'no-store'})
-        .then(r=>r.ok ? r.json() : null).then(j => { if (j) renderSpotify(j); }).catch(()=>{});
+        .then(r=>r.ok ? r.json() : null)
+        .then(j => { if (j) renderSpotify(j); })
+        .catch(()=>{});
     });
   </script>
 
@@ -339,197 +341,4 @@
   <div style="padding:24px;color:#eee">Please log in.</div>
 {% endif %}
 </body>
-
-<script>
-  // --- helper to build ws URL on current host (mirror or localhost) ---
-  function wsUrl(path){
-    const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${scheme}://${location.host}${path}`;
-  }
-
-  // ---- CLOCK + TIME PREF ----
-  window.USE_24H = false;
-  function updateClock() {
-    const el = document.getElementById("digitalClock");
-    if (!el) return;
-    const now = new Date();
-    const mm = String(now.getMinutes()).padStart(2,'0');
-    if (window.USE_24H) {
-      const hh = String(now.getHours()).padStart(2,'0');
-      el.textContent = `${hh}:${mm}`;
-    } else {
-      let h = now.getHours();
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      el.textContent = `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
-    }
-  }
-  function reformatAllEventTimes() {
-    document.querySelectorAll('[data-time-raw]').forEach(el => {
-      const raw = el.getAttribute('data-time-raw');
-      if (!raw || raw === 'All day') { el.textContent = raw || ''; return; }
-      const [h, m='00'] = raw.split(':');
-      let hh = parseInt(h, 10);
-      const mm = String(m).padStart(2, '0');
-      if (window.USE_24H) { el.textContent = `${String(hh).padStart(2,'0')}:${mm}`; return; }
-      const ampm = hh >= 12 ? 'PM' : 'AM';
-      hh = hh % 12 || 12;
-      el.textContent = `${String(hh).padStart(2,'0')}:${mm} ${ampm}`;
-    });
-  }
-
-  // --- ORIGINAL WS ROUTES (front-end only changes) ---
-  function startMirrorWebsockets(){
-
-    // 1) MESSAGE / GENERAL MIRROR EVENTS  (uses your existing /ws/mirror)
-    const mirrorSocket = new WebSocket(wsUrl('/ws/mirror'));
-    mirrorSocket.onmessage = (event) => {
-      let data; try { data = JSON.parse(event.data) } catch { return; }
-
-      // your custom message payload
-      if (data.message) {
-        const msgEl = document.getElementById("mirror-message");
-        if (msgEl) {
-          msgEl.innerText = data.message;
-          msgEl.classList.add("flash");
-          setTimeout(() => msgEl.classList.remove("flash"), 500);
-        }
-      }
-
-      // support time-pref broadcast coming over this socket as well
-      if (data.type === "time_pref") {
-        window.USE_24H = !!data.use_24h;
-        updateClock(); reformatAllEventTimes();
-      }
-    };
-
-    // 2) CALENDAR LIVE (your /ws/calendar)
-    function getWeekStart() {
-      const now = new Date(); const js = now.getDay(); const offset = (js + 6) % 7;
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
-    }
-    function ymd(d) {
-      const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
-      return `${y}-${m}-${day}`;
-    }
-    const calendarSocket = new WebSocket(wsUrl('/ws/calendar'));
-    calendarSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data || '{}');
-      const ev = data.event; if (!ev) return;
-
-      // only add events in the current fixed week to the DOM list
-      const evDate = new Date(`${ev.event_date}T00:00:00`);
-      const wkStart = getWeekStart(); const wkEnd = new Date(wkStart); wkEnd.setDate(wkStart.getDate()+7);
-      if (evDate < wkStart || evDate >= wkEnd) return;
-
-      const dayName = evDate.toLocaleDateString('en-US', { weekday: 'long' });
-      const list = document.getElementById(`list-${dayName}`);
-      if (!list) { fetch('/Calendar/upcoming_events/').then(r=>r.json()).then(j=>displayCalendarEvents(j.Week)); return; }
-
-      const placeholder = list.querySelector('li[data-placeholder="true"]'); if (placeholder) placeholder.remove();
-
-      const li = document.createElement('li');
-      const isAllDay = ev.event_time === 'All day';
-      const timeHTML = isAllDay ? `<span data-time-raw="All day">All day</span>`
-        : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${ev.event_time}</span>` : '');
-      li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
-      list.appendChild(li);
-      reformatAllEventTimes();
-    };
-
-    // 3) STOCKS (your /ws/Stocks/ — capital S + trailing slash)
-    const stocksSocket = new WebSocket(wsUrl('/ws/Stocks/'));
-    const stocks = {};
-    stocksSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data || '{}');
-      if (data.type === 'trade' && Array.isArray(data.data)) {
-        data.data.forEach(trade => {
-          const symbol = trade.s, price = trade.p;
-          stocks[symbol] = stocks[symbol] || { price, previousPrice: price };
-          stocks[symbol].previousPrice = stocks[symbol].price;
-          stocks[symbol].price = price;
-          updateStockDisplay(symbol);
-        });
-      }
-    };
-    function updateStockDisplay(symbol) {
-      const grid = document.getElementById('stocksGrid'); if (!grid) return;
-      let stockDiv = document.getElementById(`stock-${symbol}`);
-      if (!stockDiv) {
-        stockDiv = document.createElement('div');
-        stockDiv.id = `stock-${symbol}`;
-        stockDiv.classList.add('stock');
-        stockDiv.innerHTML = `<div class="stock-name">${symbol}</div><div class="stock-price" id="price-${symbol}"></div>`;
-        grid.appendChild(stockDiv);
-      }
-      const priceDiv = document.getElementById(`price-${symbol}`);
-      const st = stocks[symbol]; if (!priceDiv || !st) return;
-      const up = st.price > st.previousPrice;
-      priceDiv.innerHTML = `$${st.price.toFixed(2)} <span class="${up?'up':'down'}">${up?'▲':'▼'}</span>`;
-    }
-
-    // 4) SPOTIFY (your /ws/spotify/)
-    function renderSpotify(state){
-      const t = (state && state.track) || {};
-      const img = document.getElementById('sp-img');
-      const title = document.getElementById('sp-title');
-      const artist = document.getElementById('sp-artist');
-      if (title) title.textContent = t.name || '—';
-      if (artist) artist.textContent = (t.artists || []).join(', ') || '';
-      if (img) { if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; } }
-    }
-    const spotifyWS = new WebSocket(wsUrl('/ws/spotify/'));
-    spotifyWS.onmessage = (e)=>{
-      try{
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'spotify_state') renderSpotify(msg.data);
-      }catch(_){}
-    };
-
-    // 5) TIME-PREF SETTINGS PUSH (your /ws/settings/ if present)
-    try {
-      const settingsWS = new WebSocket(wsUrl('/ws/settings/'));
-      settingsWS.onmessage = (e)=>{
-        const msg = JSON.parse(e.data||'{}');
-        if (msg.type === 'time_pref') {
-          window.USE_24H = !!msg.use_24h;
-          updateClock(); reformatAllEventTimes();
-        }
-      };
-    } catch(_) {}
-  }
-
-  // ---- INITIAL DATA FETCHES (your existing HTTP endpoints) ----
-  async function loadTimePrefForMirror() {
-    try {
-      const r = await fetch('/auth/settings/time-format/', { credentials:'include', cache:'no-store' });
-      const j = await r.json(); window.USE_24H = !!j.use_24h;
-    } catch { window.USE_24H = false; }
-  }
-  function fetchCalendarEvents() {
-    fetch('/Calendar/upcoming_events/').then(r=>r.json()).then(j=>displayCalendarEvents(j.Week)).catch(()=>{});
-  }
-  function displayCalendarEvents(week){
-    // (keep whatever version of this you already use in index_modular.html
-    // or paste the same function from your working template)
-  }
-  function fetchWeather() {
-    fetch('/Weather/user_weather/').then(r=>r.json()).then(displayWeather).catch(()=>{});
-  }
-  function displayWeather(data){
-    // (keep your working implementation)
-  }
-
-  // ---- BOOT ----
-  document.addEventListener('DOMContentLoaded', () => {
-    startMirrorWebsockets();
-    loadTimePrefForMirror().then(() => {
-      updateClock();
-      setInterval(updateClock, 1000);
-    });
-    fetchCalendarEvents();
-    fetchWeather();
-  });
-</script>
-
 </html>
