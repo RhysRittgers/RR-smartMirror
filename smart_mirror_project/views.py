@@ -24,14 +24,3 @@ def home(request):
     # Remote UI
     return redirect("Dashboard:mobile_dashboard")
 
-
-@login_required
-def mirror_modular_preview(request):
-    # Same query as live mirror, so the preview matches what the mirror shows
-    modules = (
-        UserModule.objects
-        .select_related("module")
-        .filter(user=request.user, enabled=True)
-        .order_by("z", "y", "x")
-    )
-    return render(request, "index_modular.html", {"modules": modules})
