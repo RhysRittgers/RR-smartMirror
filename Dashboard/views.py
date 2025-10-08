@@ -4,9 +4,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseBadRequest
 import json
 
-# NEW: models for the store
-from modules.models import ModuleCatalog, UserModule
-
 
 # --- Existing remote home ---
 @csrf_exempt
