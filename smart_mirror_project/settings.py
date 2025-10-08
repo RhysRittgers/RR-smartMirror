@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     "Authentication",
     "spotify",
     "Dashboard",
-    "modules",
 ]
 
 ASGI_APPLICATION = "smart_mirror_project.asgi.application"

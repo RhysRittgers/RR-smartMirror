@@ -16,10 +16,6 @@ urlpatterns = [
     path('diag/', diag, name='diag'),
     path('Dashboard/', include(('Dashboard.urls', 'Dashboard'), namespace='Dashboard')),
     path('spotify/', include('spotify.urls')),
-    path('modules/', include("modules.urls")),
-
-    # NEW: modular preview route
-    path('mirror-modular-preview/', mirror_modular_preview, name='mirror_modular_preview'),
 ]
 
 if settings.DEBUG:
