@@ -1,4 +1,41 @@
-<div id="mod-calendar">
-  <h2>Calendar</h2>
-  <div>Upcoming events will render here.</div>
+<div id="cal-{{ um.id }}">
+  <h2 style="margin:0 0 6px 0;">Calendar</h2>
+  <div class="line" style="opacity:.85"></div>
+  <ul class="cal-list" style="list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px;"></ul>
 </div>
+
+<script>
+(function(){
+  const root = document.getElementById("cal-{{ um.id }}");
+  const ul = root.querySelector(".cal-list");
+
+  function fmt(dstr, tstr){
+    try{
+      if(!dstr) return "";
+      const date = new Date(`${dstr}${tstr ? "T"+tstr : ""}`);
+      return date.toLocaleString(undefined, { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    }catch(_) { return dstr + (tstr ? " " + tstr : ""); }
+  }
+
+  async function load(){
+    try{
+      const r = await fetch("/Calendar/user_events/", { credentials:"include", cache:"no-store" });
+      const j = await r.json();
+      const items = j?.events || j || [];
+      ul.innerHTML = items.slice(0,5).map(ev=>{
+        const when = fmt(ev.date, ev.time);
+        const name = ev.name || ev.title || "Event";
+        return `<li style="display:grid;gap:2px">
+          <div style="opacity:.9">${name}</div>
+          <small style="opacity:.7">${when}</small>
+        </li>`;
+      }).join("") || `<li>Nothing upcoming.</li>`;
+    }catch(e){
+      ul.innerHTML = `<li>Calendar unavailable</li>`;
+    }
+  }
+
+  load();
+  setInterval(load, 2 * 60 * 1000);
+})();
+</script>

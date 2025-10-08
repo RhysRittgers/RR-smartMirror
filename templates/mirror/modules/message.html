@@ -1,4 +1,39 @@
-<div id="mod-message">
-  <h2>Message</h2>
-  <div id="mirror-message">This is your message tile.</div>
+<div id="msg-{{ um.id }}">
+  <h2 style="margin:0 0 6px 0;">Message</h2>
+  <div class="line" style="opacity:.85"></div>
+  <div class="m-text" style="margin-top:10px; font-size:18px; opacity:.92">Loading…</div>
 </div>
+
+<script>
+(function(){
+  const root = document.getElementById("msg-{{ um.id }}");
+  const textEl = root.querySelector(".m-text");
+
+  async function load(){
+    try{
+      const r = await fetch("/Message/current/", { credentials:"include", cache:"no-store" });
+      const j = await r.json();
+      textEl.textContent = j?.message || j?.text || "—";
+    }catch(_){
+      textEl.textContent = "—";
+    }
+  }
+
+  // initial fetch
+  load();
+
+  // live updates via your existing /ws/message/ consumer
+  const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
+  try{
+    const ws = new WebSocket(`${scheme}://${location.host}/ws/message/`);
+    ws.onmessage = (e)=>{
+      try{
+        const msg = JSON.parse(e.data);
+        if (msg.type === "message_update") {
+          textEl.textContent = msg.message || "—";
+        }
+      }catch(_){}
+    };
+  }catch(_){}
+})();
+</script>
