@@ -1,38 +1,8 @@
-<div id="spotify-{{ um.id }}">
-  <h2 style="margin:0 0 6px 0;">Spotify</h2>
-  <div class="line" style="opacity:.85"></div>
-  <div class="sp-wrap" style="display:grid;gap:6px;margin-top:10px">
-    <img class="sp-img" alt="" style="display:none;width:64px;height:64px;border-radius:10px;object-fit:cover">
-    <div class="sp-title" style="font-weight:600;opacity:.95">—</div>
-    <div class="sp-artist" style="opacity:.75"> </div>
+<h2>Spotify</h2>
+<div id="sp-box">
+  <img id="sp-img" />
+  <div>
+    <div id="sp-title"></div>
+    <div id="sp-artist"></div>
   </div>
 </div>
-
-<script>
-(function(){
-  const root   = document.getElementById("spotify-{{ um.id }}");
-  const imgEl  = root.querySelector(".sp-img");
-  const tEl    = root.querySelector(".sp-title");
-  const aEl    = root.querySelector(".sp-artist");
-
-  function render(s){
-    const track = s?.track || {};
-    tEl.textContent = track.name || "—";
-    aEl.textContent = (track.artists || []).join(", ");
-    if (track.image){ imgEl.src = track.image; imgEl.style.display='block'; } else { imgEl.style.display='none'; }
-  }
-
-  async function load(){
-    try{
-      const r = await fetch("/spotify/state/", { credentials: "include", cache: "no-store" });
-      const j = await r.json();
-      render(j);
-    }catch(_){}
-  }
-
-  load();
-  setInterval(load, 10 * 1000); // light polling
-
-  // (Optional) live push from your mirror’s /ws/spotify/— enable later if desired
-})();
-</script>

@@ -7,32 +7,336 @@
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
   <style>
     /* 12-col CSS Grid surface */
-    #surface{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:90px;gap:14px;padding:16px}
+    #surface{display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:220px;gap:14px;padding:16px}
     .tile{background:rgba(255,255,255,0.05);border-radius:14px;padding:12px;overflow:hidden}
     h2{margin:0 0 8px 0;font-size:18px;font-weight:600;opacity:.9}
+    /* old layout cosmetics that the JS expects */
+    .calendar-month { font-size:.95rem; opacity:.8; letter-spacing:.5px; margin:-6px 0 8px 0; }
+    .day-section { margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.08); }
+    .day-section.today { background:rgba(255,255,255,0.06); border-radius:8px; padding:6px 8px; }
+    .day-header { display:flex; align-items:center; gap:8px; margin:0 0 4px 0; }
+    .day-header h3 { margin:0; }
+    .date-pill { display:inline-block; min-width:28px; padding:2px 8px; border-radius:999px; background:rgba(255,255,255,0.15); font-weight:700; text-align:center; }
+    .today .date-pill { background:rgba(0,180,255,.35); }
+    .calendar-container ul { margin:4px 0 0 0; padding-left:18px; }
+    .calendar-container li { margin:2px 0; }
+
+    .wx-row{ display:flex; align-items:baseline; gap:10px; }
+    .wx-temp{ font-size:2.6rem; line-height:1; font-weight:700; letter-spacing:.5px; }
+    .wx-unit{ opacity:.85; margin-left:4px; font-size:1.2rem; }
+    .wx-cond{ opacity:.9; margin:6px 0 10px 0; }
+    .wx-meta{ display:grid; grid-template-columns: 1fr; row-gap:4px; opacity:.9; }
+    .wx-meta .pair{ display:flex; align-items:center; gap:8px; }
+    .wx-meta .label{ opacity:.8; min-width:78px; }
+    .wx-loc{ font-weight:600; opacity:.95; }
+
+    #sp-box { display:flex; align-items:center; gap:12px; margin-top:6px; }
+    #sp-img { width:160px; height:160px; object-fit:cover; border-radius:10px; display:none; }
+    #sp-title { margin-top:8px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+    #sp-artist { opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
   </style>
 </head>
 <body>
 {% if user.is_authenticated %}
+
   <div id="surface">
-    {% for um in modules %}
-      <div class="tile"
-           data-id="{{ um.id }}"
-           style="grid-column: {{ um.x|add:1 }} / span {{ um.w }}; grid-row: {{ um.y|add:1 }} / span {{ um.h }};">
-        {% include "mirror/modules/"|add:um.module.key|add:".html" with um=um %}
-      </div>
-    {% empty %}
-      <div style="color:#bbb">No modules yet. Go to <strong>Dashboard → Store</strong> and install a few.</div>
-    {% endfor %}
+    {# Calendar #}
+    <div class="tile" style="grid-column: 1 / span 4; grid-row: 1 / span 1;">
+      {% include "mirror/modules/calendar.html" %}
+    </div>
+
+    {# Message #}
+    <div class="tile" style="grid-column: 5 / span 4; grid-row: 1 / span 1;">
+      {% include "mirror/modules/message.html" %}
+    </div>
+
+    {# Weather #}
+    <div class="tile" style="grid-column: 9 / span 4; grid-row: 1 / span 1;">
+      {% include "mirror/modules/weather.html" %}
+    </div>
+
+    {# Stocks #}
+    <div class="tile" style="grid-column: 1 / span 4; grid-row: 2 / span 1;">
+      {% include "mirror/modules/stocks.html" %}
+    </div>
+
+    {# Spotify #}
+    <div class="tile" style="grid-column: 5 / span 4; grid-row: 2 / span 1;">
+      {% include "mirror/modules/spotify.html" %}
+    </div>
   </div>
+
+  {# drag/save JS (your file) #}
   <script src="{% static 'js/layout.js' %}"></script>
+
+  {# ========= THE ORIGINAL JS (MINIMALLY ADAPTED) ========= #}
+  <script>
+    /* --------- time helpers --------- */
+    window.USE_24H = false;
+
+    function formatTimeString(hhmm) {
+      if (!hhmm || hhmm === 'All day') return hhmm || '';
+      const parts = hhmm.split(':');
+      if (parts.length < 2) return hhmm;
+      let h = parseInt(parts[0], 10);
+      const mm = (parts[1] || '00').padStart(2,'0');
+      if (window.USE_24H) return `${String(h).padStart(2,'0')}:${mm}`;
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
+    }
+    function reformatAllEventTimes() {
+      document.querySelectorAll('[data-time-raw]').forEach(el => {
+        el.textContent = formatTimeString(el.getAttribute('data-time-raw'));
+      });
+    }
+    function getWeekStart() {
+      const now = new Date();
+      const js = now.getDay();          // 0=Sun..6=Sat
+      const offset = (js + 6) % 7;      // 0=Mon..6=Sun
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
+    }
+    function ymd(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+
+    /* --------- clock --------- */
+    function updateClock() {
+      const el = document.getElementById("digitalClock");
+      if (!el) return;
+      const now = new Date();
+      const mm = String(now.getMinutes()).padStart(2,'0');
+      if (window.USE_24H) {
+        const hh = String(now.getHours()).padStart(2,'0');
+        el.textContent = `${hh}:${mm}`;
+      } else {
+        let h = now.getHours();
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        el.textContent = `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
+      }
+    }
+
+    async function loadTimePrefForMirror() {
+      try {
+        const r = await fetch('/auth/settings/time-format/', { credentials:'include', cache:'no-store' });
+        const j = await r.json();
+        window.USE_24H = !!j.use_24h;
+      } catch(e) { window.USE_24H = false; }
+    }
+
+    /* --------- calendar (HTTP + live) --------- */
+    function fetchCalendarEvents() {
+      fetch('/Calendar/upcoming_events/')
+        .then(r => r.json())
+        .then(j => displayCalendarEvents(j.Week))
+        .catch(() => {
+          const el = document.getElementById('calendarEvents');
+          if (el) el.innerHTML = '<p>Calendar unavailable</p>';
+        });
+    }
+    function displayCalendarEvents(events) {
+      const calendarDiv = document.getElementById('calendarEvents');
+      const monthEl = document.getElementById('calendarMonth');
+      if (!calendarDiv) return;
+      calendarDiv.innerHTML = '';
+
+      const BASE = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      const weekStart = getWeekStart();
+      const today = new Date();
+      const todayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+
+      monthEl.textContent = today.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+
+      BASE.forEach((day, i) => {
+        const d = new Date(weekStart); d.setDate(weekStart.getDate()+i);
+        const section = document.createElement('div');
+        section.className = 'day-section' + (day === todayName ? ' today' : '');
+        section.innerHTML = `
+          <div class="day-header">
+            <h3>${day}</h3>
+            <span class="date-pill">${d.getDate()}</span>
+          </div>
+          <ul id="list-${day}"></ul>
+        `;
+        calendarDiv.appendChild(section);
+
+        const ul = section.querySelector('ul');
+        const raw = (events && events[day]) || [];
+        const wantYMD = ymd(d);
+        const filtered = raw.filter(ev => typeof ev === 'object' && ev.event_date === wantYMD);
+
+        if (!filtered.length) {
+          const li = document.createElement('li');
+          li.textContent = 'No events scheduled';
+          li.setAttribute('data-placeholder', 'true');
+          ul.appendChild(li);
+        } else {
+          filtered.forEach(ev => {
+            const li = document.createElement('li');
+            const isAllDay = ev.event_time === 'All day';
+            const timeHTML = isAllDay
+              ? `<span data-time-raw="All day">All day</span>`
+              : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
+            li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
+            ul.appendChild(li);
+          });
+        }
+      });
+    }
+
+    /* --------- weather (HTTP) --------- */
+    function fetchWeather() {
+      fetch('/Weather/user_weather/')
+        .then(r => r.json())
+        .then(displayWeather)
+        .catch(() => {
+          const wrap = document.getElementById('weatherData');
+          if (wrap) wrap.innerHTML = '<p>—</p>';
+        });
+    }
+    function displayWeather(data) {
+      const wrap = document.getElementById('weatherData');
+      if (!wrap) return;
+      if (!data || data.error) { wrap.innerHTML = `<p>${data?.error || '—'}</p>`; return; }
+      const loc   = data.location || '';
+      const temp  = data.temperature;
+      const unit  = (data.unit || 'F')[0];
+      const cond  = data.forcast || data.forecast || '';
+      const hum   = data.humidity !== "Hidden" ? data.humidity : null;
+      const ss    = data.sunrise_sunset !== "Hidden" ? data.sunrise_sunset : null;
+      const sunrise = ss ? new Date(ss.sunrise * 1000).toLocaleTimeString() : null;
+      const sunset  = ss ? new Date(ss.sunset  * 1000).toLocaleTimeString() : null;
+
+      wrap.innerHTML = `
+        <div class="wx-row">
+          <div class="wx-temp">${temp}<span class="wx-unit">°${unit}</span></div>
+        </div>
+        <div class="wx-cond">${cond ? cond.charAt(0).toUpperCase() + cond.slice(1) : ''}</div>
+        <div class="wx-meta">
+          ${loc ? `<div class="pair"><span class="label">Location</span><span class="wx-loc">${loc}</span></div>` : ''}
+          ${sunrise ? `<div class="pair"><span class="label">Sunrise</span><span>${sunrise}</span></div>` : ''}
+          ${sunset ? `<div class="pair"><span class="label">Sunset</span><span>${sunset}</span></div>` : ''}
+          ${hum !== null ? `<div class="pair"><span class="label">Humidity</span><span>${hum}%</span></div>` : ''}
+        </div>
+      `;
+    }
+
+    /* --------- spotify (WS + snapshot) --------- */
+    function renderSpotify(state){
+      const t = (state && state.track) || {};
+      const img = document.getElementById('sp-img');
+      const title = document.getElementById('sp-title');
+      const artist = document.getElementById('sp-artist');
+      if (!title) return;
+
+      title.textContent = t.name || '—';
+      artist.textContent = (t.artists || []).join(', ') || '';
+      if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
+    }
+
+    /* --------- sockets (reusing your original routes) --------- */
+    function startMirrorWebsockets() {
+      // message + time_pref on mirror socket
+      const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
+      mirrorSocket.onmessage = (event) => {
+        let data;
+        try { data = JSON.parse(event.data); } catch { return; }
+        if (data.message) {
+          const el = document.getElementById("mirror-message");
+          if (el) el.textContent = data.message || '—';
+        }
+        if (data.type === "time_pref") {
+          window.USE_24H = !!data.use_24h;
+          updateClock();
+          reformatAllEventTimes();
+        }
+      };
+
+      // calendar live add (same logic)
+      const calendarSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
+      calendarSocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const ev = data.event;
+        if (!ev) return;
+
+        const evDate = new Date(`${ev.event_date}T00:00:00`);
+        const wkStart = getWeekStart();
+        const wkEnd = new Date(wkStart); wkEnd.setDate(wkStart.getDate()+7);
+        if (evDate < wkStart || evDate >= wkEnd) return;
+
+        const dayName = evDate.toLocaleDateString('en-US', { weekday: 'long' });
+        const list = document.getElementById(`list-${dayName}`);
+        if (!list) { fetch('/Calendar/upcoming_events/').then(r=>r.json()).then(j=>displayCalendarEvents(j.Week)); return; }
+
+        const placeholder = list.querySelector('li[data-placeholder="true"]');
+        if (placeholder) placeholder.remove();
+
+        const li = document.createElement('li');
+        const isAllDay = ev.event_time === 'All day';
+        const timeHTML = isAllDay
+          ? `<span data-time-raw="All day">All day</span>`
+          : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
+        li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
+        list.appendChild(li);
+      };
+
+      // spotify live
+      (function(){
+        const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
+        const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
+        ws.onmessage = (e)=>{
+          try{
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'spotify_state') renderSpotify(msg.data);
+          }catch(_){}
+        };
+      })();
+
+      // settings (time_pref)
+      (function(){
+        const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
+        const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
+        ws.onmessage = (e) => {
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'time_pref') {
+              window.USE_24H = !!msg.use_24h;
+              updateClock();
+              reformatAllEventTimes();
+            }
+          } catch (_) {}
+        };
+      })();
+    }
+
+    /* --------- bootstrap --------- */
+    document.addEventListener("DOMContentLoaded", () => {
+      // mini clock header (optional)
+      const header = document.createElement('div');
+      header.style.position='fixed'; header.style.top='10px'; header.style.right='14px'; header.style.opacity='.7';
+      header.innerHTML = `<span id="digitalClock">--:--</span>`;
+      document.body.appendChild(header);
+
+      startMirrorWebsockets();
+      loadTimePrefForMirror().then(() => {
+        updateClock();
+        setInterval(updateClock, 1000);
+      });
+      fetchCalendarEvents();
+      fetchWeather();
+
+      // initial spotify snapshot (may 401 if not connected)
+      fetch('/spotify/state/', {credentials:'include', cache:'no-store'})
+        .then(r=>r.ok ? r.json() : null).then(j => { if (j) renderSpotify(j); }).catch(()=>{});
+    });
+  </script>
+
 {% else %}
   <div style="padding:24px;color:#eee">Please log in.</div>
 {% endif %}
-
-<div style="position:fixed;top:8px;right:8px;color:#aaa;font-size:12px;z-index:9999">
-  mirror user: {{ user.username }} | modules: {{ modules|length }}
-</div>
-
 </body>
 </html>
