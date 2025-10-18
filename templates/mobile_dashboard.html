@@ -415,5 +415,90 @@
   prefCheckbox.addEventListener('change', e => saveTimePref(e.target.checked));
 </script>
 
+<script>
+  // --- helper to read csrftoken cookie (you already define getCookie above) ---
+  // function getCookie(name) { ... }  // you already have this
+
+  // ---------- MESSAGE FORM ----------
+  (function wireMessageForm(){
+    const form = document.getElementById('messageForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = form.querySelector('input[name="message"]');
+      const message = (input?.value || '').trim();
+      if (!message) return;
+
+      try {
+        const res = await fetch('/Message/update-message/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          credentials: 'include',
+          cache: 'no-store',
+          body: new URLSearchParams({ message })
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          console.warn('Update message failed:', res.status, txt);
+        } else {
+          // optional UI reset/feedback
+          input.value = '';
+        }
+      } catch (err) {
+        console.error('Update message error:', err);
+      }
+    });
+  })();
+
+  // ---------- CALENDAR FORM ----------
+  (function wireCalendarForm(){
+    const form = document.getElementById('calendarForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+
+      // Must match your view's expected field names:
+      // event_name, event_date (YYYY-MM-DD), event_time (HH:MM, optional), event_description (optional)
+      const body = new URLSearchParams({
+        event_name: (fd.get('event_name') || '').toString(),
+        event_date: (fd.get('event_date') || '').toString(),
+        event_time: (fd.get('event_time') || '').toString(),
+        event_description: (fd.get('event_description') || '').toString(),
+      });
+
+      try {
+        const res = await fetch('/Calendar/add-event/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          credentials: 'include',
+          cache: 'no-store',
+          body
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          console.warn('Add event failed:', res.status, txt);
+        } else {
+          // optional UI reset/feedback
+          form.reset();
+        }
+      } catch (err) {
+        console.error('Add event error:', err);
+      }
+    });
+  })();
+</script>
+
+
 </body>
 </html>
