@@ -5,11 +5,14 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from .models import CustomMessage
 
+
 def mirror_view(request):
     return render(request, 'index.html')
 
+
 def dashboard_view(request):
     return render(request, 'dashboard.html')
+
 
 @csrf_exempt
 def update_message(request):
@@ -32,17 +35,20 @@ def update_message(request):
     custom_message.save()
     print("💾 Saved to DB for user:", request.user.username)
 
-    # Broadcast via WebSocket
+    # Attempt a broadcast via this service's channel layer
     channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        "mirror_display",
-        {
-            "type": "broadcast_message",
-            "message": message
-        }
-    )
+    if channel_layer is not None:
+        async_to_sync(channel_layer.group_send)(
+            "mirror_display",
+            {
+                "type": "broadcast_message",
+                "message": message
+            }
+        )
+        print("📡 group_send issued on mirror_display")
 
     return JsonResponse({"status": "Message saved and broadcasted!"})
+
 
 @csrf_exempt
 def user_message(request):
@@ -54,6 +60,7 @@ def user_message(request):
         "message": message.custom_message if message else " ",
         "is_visible": message.is_visible if message else False
     })
+
 
 @csrf_exempt
 def toggle_message(request):
