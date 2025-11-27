@@ -70,11 +70,16 @@ def add_event(request):
         event_description=desc
     )
 
-    # Broadcast live to mirrors
+    # Broadcast live to mirrors via this service's channel layer (best effort)
     channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        "mirror_calendar",
-        {"type": "calendar_event", "event": event.as_dict()}
-    )
+    if channel_layer is not None:
+        async_to_sync(channel_layer.group_send)(
+            "mirror_calendar",
+            {"type": "calendar_event", "event": event.as_dict()}
+        )
 
-    return JsonResponse({"status": "Event saved and broadcasted!"})
+    # 🔥 IMPORTANT: return the event so the remote can push it via WebSocket
+    return JsonResponse({
+        "status": "Event saved and broadcasted!",
+        "event": event.as_dict()
+    })

@@ -440,6 +440,27 @@
     }
   })();
 
+  // ---------- CALENDAR WEBSOCKET (direct to mirror) ----------
+  (function setupCalendarWS(){
+    try {
+      const ws = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
+      window.CALENDAR_WS = ws;
+
+      ws.onopen = () => {
+        console.log("✅ CALENDAR_WS connected to mirror");
+      };
+      ws.onclose = () => {
+        console.log("⚠️ CALENDAR_WS closed");
+        window.CALENDAR_WS = null;
+      };
+      ws.onerror = (e) => {
+        console.error("❌ CALENDAR_WS error:", e);
+      };
+    } catch (err) {
+      console.error("❌ Failed to create CALENDAR_WS:", err);
+    }
+  })();
+
   // ---------- MESSAGE FORM ----------
   (function wireMessageForm(){
     const form = document.getElementById('messageForm');
@@ -527,11 +548,29 @@
           body
         });
 
+        let data = null;
+        try {
+          data = await res.json();
+        } catch (_) {
+          // ignore JSON parse errors, but log
+          console.warn('Add event: response was not valid JSON');
+        }
+
         if (!res.ok) {
-          const txt = await res.text();
+          const txt = data ? JSON.stringify(data) : await res.text().catch(()=> '');
           console.warn('Add event failed:', res.status, txt);
         } else {
           form.reset();
+
+          const ev = data && data.event;
+          if (ev && window.CALENDAR_WS && window.CALENDAR_WS.readyState === WebSocket.OPEN) {
+            window.CALENDAR_WS.send(JSON.stringify({
+              type: 'calendar_event',
+              event: ev
+            }));
+          } else {
+            console.warn("CALENDAR_WS not open or no event in response; mirror will update on next reload.");
+          }
         }
       } catch (err) {
         console.error('Add event error:', err);
