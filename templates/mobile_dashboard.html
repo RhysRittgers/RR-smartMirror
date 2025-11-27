@@ -162,6 +162,7 @@
       <form id="messageForm">
         <input type="text" name="message" placeholder="New message" required>
         <button class="primary" type="submit">Send</button>
+        <small id="messageStatus" class="muted"></small>
       </form>
     </div>
   </section>
@@ -277,16 +278,17 @@
     </div>
   </section>
 
-<div style="position:fixed;top:8px;left:8px;color:#aaa;font-size:12px;z-index:9999">
-  remote user: {{ user.username }}
-</div>
-
+  <div style="position:fixed;top:8px;left:8px;color:#aaa;font-size:12px;z-index:9999">
+    remote user: {{ user.username }}
+  </div>
 
 </div>
 
 <!-- Initialize icons -->
 <script>
-  if (window.lucide) { window.lucide.createIcons({ attrs: { 'stroke-width': 1.75, 'aria-hidden': 'true' } }); }
+  if (window.lucide) {
+    window.lucide.createIcons({ attrs: { 'stroke-width': 1.75, 'aria-hidden': 'true' } });
+  }
 </script>
 
 <!-- =============== NAV JS =============== -->
@@ -294,7 +296,6 @@
   const pages = Array.from(document.querySelectorAll('.page'));
   function show(id){
     pages.forEach(p => p.classList.toggle('active', p.id === id));
-    // keep both logout buttons in sync
     const mainLogout = document.getElementById('remoteLogoutBtn');
     const cloneLogout = document.getElementById('remoteLogoutBtn_clone');
     if (cloneLogout && mainLogout) cloneLogout.onclick = mainLogout.onclick;
@@ -314,7 +315,7 @@
     return v ? decodeURIComponent(v.split('=')[1]) : '';
   }
 
-  // ----- Mirror WS bootstrap (token relay)
+  // ----- Mirror WS bootstrap (token relay) -----
   window.addEventListener("DOMContentLoaded", () => {
     fetch("/auth/generate-token/")
       .then(res => res.json())
@@ -330,7 +331,7 @@
       .catch(err => console.error("❌ Error generating token:", err));
   });
 
-  // ----- Spotify controls + forward state to mirror
+  // ----- Spotify controls + forward state to mirror -----
   async function ctrl(action, qs=''){
     const res = await fetch(`/spotify/control/${action}/${qs}`, {
       method: 'POST',
@@ -339,7 +340,9 @@
       cache: 'no-store'
     });
     const j = await res.json().catch(()=>({}));
-    try { document.getElementById('sp-state').textContent = JSON.stringify(j.state||j, null, 2); } catch(e){}
+    try {
+      document.getElementById('sp-state').textContent = JSON.stringify(j.state || j, null, 2);
+    } catch(e){}
 
     const payload = j.state || null;
     if (payload && window.MIRROR_WS && window.MIRROR_WS.readyState === 1) {
@@ -416,19 +419,46 @@
 </script>
 
 <script>
-  // --- helper to read csrftoken cookie (you already define getCookie above) ---
-  // function getCookie(name) { ... }  // you already have this
+  // ---------- MESSAGE WEBSOCKET (direct to mirror) ----------
+  (function setupMessageWS(){
+    try {
+      const ws = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
+      window.MESSAGE_WS = ws;
+
+      ws.onopen = () => {
+        console.log("✅ MESSAGE_WS connected to mirror");
+      };
+      ws.onclose = () => {
+        console.log("⚠️ MESSAGE_WS closed");
+        window.MESSAGE_WS = null;
+      };
+      ws.onerror = (e) => {
+        console.error("❌ MESSAGE_WS error:", e);
+      };
+    } catch (err) {
+      console.error("❌ Failed to create MESSAGE_WS:", err);
+    }
+  })();
 
   // ---------- MESSAGE FORM ----------
   (function wireMessageForm(){
     const form = document.getElementById('messageForm');
     if (!form) return;
 
+    const statusEl = document.getElementById('messageStatus');
+
+    function setStatus(msg){
+      if (!statusEl) return;
+      statusEl.textContent = msg || '';
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const input = form.querySelector('input[name="message"]');
       const message = (input?.value || '').trim();
       if (!message) return;
+
+      setStatus('Sending…');
 
       try {
         const res = await fetch('/Message/update-message/', {
@@ -445,12 +475,26 @@
         if (!res.ok) {
           const txt = await res.text();
           console.warn('Update message failed:', res.status, txt);
+          setStatus('Error sending message');
         } else {
-          // optional UI reset/feedback
           input.value = '';
+          setStatus('Message sent ✔');
+
+          // Try to push live update to mirror via WebSocket
+          if (window.MESSAGE_WS && window.MESSAGE_WS.readyState === WebSocket.OPEN) {
+            window.MESSAGE_WS.send(JSON.stringify({
+              type: 'broadcast_message',
+              message: message
+            }));
+          } else {
+            console.warn("MESSAGE_WS not open; mirror will update on next reload.");
+          }
+
+          setTimeout(() => setStatus(''), 1500);
         }
       } catch (err) {
         console.error('Update message error:', err);
+        setStatus('Network error');
       }
     });
   })();
@@ -464,8 +508,6 @@
       e.preventDefault();
       const fd = new FormData(form);
 
-      // Must match your view's expected field names:
-      // event_name, event_date (YYYY-MM-DD), event_time (HH:MM, optional), event_description (optional)
       const body = new URLSearchParams({
         event_name: (fd.get('event_name') || '').toString(),
         event_date: (fd.get('event_date') || '').toString(),
@@ -489,7 +531,6 @@
           const txt = await res.text();
           console.warn('Add event failed:', res.status, txt);
         } else {
-          // optional UI reset/feedback
           form.reset();
         }
       } catch (err) {
@@ -498,7 +539,6 @@
     });
   })();
 </script>
-
 
 </body>
 </html>
