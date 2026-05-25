@@ -111,28 +111,43 @@
 
 <!-- ===== WEBSOCKETS ===== -->
 <script>
-  // helpers for week math
   function getWeekStart() {
-    const now = new Date();               // local time
-    const js = now.getDay();              // 0=Sun..6=Sat
-    const offset = (js + 6) % 7;          // 0=Mon..6=Sun
+    const now = new Date();
+    const js = now.getDay();
+    const offset = (js + 6) % 7;
     return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
   }
+
   function ymd(d) {
     const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   }
 
-  function startMirrorWebsockets() {
-    // Message WS
+  function fetchMessage() {
+    fetch('/Message/user_message/', { credentials: 'include', cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.message) {
+          const msgEl = document.getElementById("mirror-message");
+          if (msgEl) msgEl.innerText = data.message;
+        }
+      })
+      .catch(err => console.error("Error fetching message:", err));
+  }
+
+  function connectMessageSocket() {
     const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
+
+    mirrorSocket.onopen = () => {
+      console.log("Message WebSocket connected");
+    };
+
     mirrorSocket.onmessage = (event) => {
       let data;
       try { data = JSON.parse(event.data); } catch { return; }
 
-      // existing custom message handling
       if (data.message) {
         const msgEl = document.getElementById("mirror-message");
         if (msgEl) {
@@ -142,7 +157,6 @@
         }
       }
 
-      // NEW: also accept time_pref over the mirror socket
       if (data.type === "time_pref") {
         window.USE_24H = !!data.use_24h;
         if (typeof updateClock === "function") updateClock();
@@ -150,21 +164,45 @@
       }
     };
 
-    // Calendar WS (live add, but only if event is in THIS fixed week)
+    mirrorSocket.onerror = (error) => {
+      console.error("Message WebSocket error:", error);
+      mirrorSocket.close();
+    };
+
+    mirrorSocket.onclose = () => {
+      console.warn("Message WebSocket closed. Reconnecting in 5 seconds...");
+      setTimeout(connectMessageSocket, 5000);
+    };
+  }
+
+  function connectCalendarSocket() {
     const calendarSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
+
+    calendarSocket.onopen = () => {
+      console.log("Calendar WebSocket connected");
+    };
+
     calendarSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      let data;
+      try { data = JSON.parse(event.data); } catch { return; }
+
       const ev = data.event;
       if (!ev) return;
 
       const evDate = new Date(`${ev.event_date}T00:00:00`);
       const wkStart = getWeekStart();
-      const wkEnd = new Date(wkStart); wkEnd.setDate(wkStart.getDate()+7);
-      if (evDate < wkStart || evDate >= wkEnd) return; // ignore out-of-week events
+      const wkEnd = new Date(wkStart);
+      wkEnd.setDate(wkStart.getDate() + 7);
+
+      if (evDate < wkStart || evDate >= wkEnd) return;
 
       const dayName = evDate.toLocaleDateString('en-US', { weekday: 'long' });
       const list = document.getElementById(`list-${dayName}`);
-      if (!list) { fetch('/Calendar/upcoming_events/').then(r=>r.json()).then(j=>displayCalendarEvents(j.Week)); return; }
+
+      if (!list) {
+        fetchCalendarEvents();
+        return;
+      }
 
       const placeholder = list.querySelector('li[data-placeholder="true"]');
       if (placeholder) placeholder.remove();
@@ -174,28 +212,62 @@
       const timeHTML = isAllDay
         ? `<span data-time-raw="All day">All day</span>`
         : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
+
       li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
       list.appendChild(li);
     };
 
-    // Stocks WS
+    calendarSocket.onerror = (error) => {
+      console.error("Calendar WebSocket error:", error);
+      calendarSocket.close();
+    };
+
+    calendarSocket.onclose = () => {
+      console.warn("Calendar WebSocket closed. Reconnecting in 5 seconds...");
+      setTimeout(connectCalendarSocket, 5000);
+    };
+  }
+
+  function connectStocksSocket() {
     const stocks = {};
     const stocksSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/Stocks/");
+
+    stocksSocket.onopen = () => {
+      console.log("Stocks WebSocket connected");
+    };
+
     stocksSocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      let data;
+      try { data = JSON.parse(event.data); } catch { return; }
+
       if (data.type === 'trade' && data.data) {
         data.data.forEach(trade => {
-          const symbol = trade.s, price = trade.p;
+          const symbol = trade.s;
+          const price = trade.p;
+
           stocks[symbol] = stocks[symbol] || { price, previousPrice: price };
           stocks[symbol].previousPrice = stocks[symbol].price;
           stocks[symbol].price = price;
+
           updateStockDisplay(symbol);
         });
       }
     };
+
+    stocksSocket.onerror = (error) => {
+      console.error("Stocks WebSocket error:", error);
+      stocksSocket.close();
+    };
+
+    stocksSocket.onclose = () => {
+      console.warn("Stocks WebSocket closed. Reconnecting in 5 seconds...");
+      setTimeout(connectStocksSocket, 5000);
+    };
+
     function updateStockDisplay(symbol) {
       const grid = document.getElementById('stocksGrid');
       let stockDiv = document.getElementById(`stock-${symbol}`);
+
       if (!stockDiv) {
         stockDiv = document.createElement('div');
         stockDiv.id = `stock-${symbol}`;
@@ -203,37 +275,70 @@
         stockDiv.innerHTML = `<div class="stock-name">${symbol}</div><div class="stock-price" id="price-${symbol}"></div>`;
         grid.appendChild(stockDiv);
       }
+
       const priceDiv = document.getElementById(`price-${symbol}`);
       const stock = stocks[symbol];
       const up = stock.price > stock.previousPrice;
-      priceDiv.innerHTML = `$${stock.price.toFixed(2)} <span class="${up?'up':'down'}">${up?'▲':'▼'}</span>`;
-    }
 
-    // Settings WS (live time-format push)
-    (function(){
-      const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-      const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
-      ws.onmessage = (e) => {
-        try {
-          const msg = JSON.parse(e.data);
-          if (msg.type === 'time_pref') {
-            window.USE_24H = !!msg.use_24h;
-            if (typeof updateClock === 'function') updateClock();
-            reformatAllEventTimes();
-          }
-        } catch (_) {}
-      };
-    })();
+      priceDiv.innerHTML = `$${stock.price.toFixed(2)} <span class="${up ? 'up' : 'down'}">${up ? '▲' : '▼'}</span>`;
+    }
+  }
+
+  function connectSettingsSocket() {
+    const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
+    const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
+
+    ws.onopen = () => {
+      console.log("Settings WebSocket connected");
+    };
+
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+
+        if (msg.type === 'time_pref') {
+          window.USE_24H = !!msg.use_24h;
+          if (typeof updateClock === 'function') updateClock();
+          reformatAllEventTimes();
+        }
+      } catch (_) {}
+    };
+
+    ws.onerror = (error) => {
+      console.error("Settings WebSocket error:", error);
+      ws.close();
+    };
+
+    ws.onclose = () => {
+      console.warn("Settings WebSocket closed. Reconnecting in 5 seconds...");
+      setTimeout(connectSettingsSocket, 5000);
+    };
+  }
+
+  function startMirrorWebsockets() {
+    connectMessageSocket();
+    connectCalendarSocket();
+    connectStocksSocket();
+    connectSettingsSocket();
   }
 
   document.addEventListener("DOMContentLoaded", () => {
     startMirrorWebsockets();
+
     loadTimePrefForMirror().then(() => {
       updateClock();
       setInterval(updateClock, 1000);
     });
+
+    fetchMessage();
     fetchCalendarEvents();
     fetchWeather();
+
+    setInterval(() => {
+      fetchMessage();
+      fetchCalendarEvents();
+      fetchWeather();
+    }, 5 * 60 * 1000);
   });
 </script>
 
@@ -370,6 +475,7 @@
 </script>
 
 <!-- ===== Spotify Now Playing (mirror) ===== -->
+{% if user.is_authenticated %}
 <script>
   function renderSpotify(state){
     const t = (state && state.track) || {};
@@ -382,24 +488,47 @@
     if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
   }
 
-  // Live updates from the mirror host
-  (function(){
+  function fetchSpotifyState() {
+    fetch('/spotify/state/', { credentials:'include', cache:'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(j => { if (j) renderSpotify(j); })
+      .catch(() => {});
+  }
+
+  function connectSpotifySocket() {
     const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
     const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
-    ws.onmessage = (e)=>{
-      try{
+
+    ws.onopen = () => {
+      console.log("Spotify WebSocket connected");
+    };
+
+    ws.onmessage = (e) => {
+      try {
         const msg = JSON.parse(e.data);
         if (msg.type === 'spotify_state') renderSpotify(msg.data);
-      }catch(_){}
+      } catch (_) {}
     };
-  })();
 
-  // Initial snapshot (will 401 if mirror session isn’t authed yet)
-  fetch('/spotify/state/', {credentials:'include', cache:'no-store'})
-    .then(r=>r.ok ? r.json() : null)
-    .then(j => { if (j) renderSpotify(j); })
-    .catch(()=>{});
+    ws.onerror = (error) => {
+      console.error("Spotify WebSocket error:", error);
+      ws.close();
+    };
+
+    ws.onclose = () => {
+      console.warn("Spotify WebSocket closed. Reconnecting in 5 seconds...");
+      setTimeout(connectSpotifySocket, 5000);
+    };
+  }
+
+  connectSpotifySocket();
+  fetchSpotifyState();
+
+  setInterval(() => {
+    fetchSpotifyState();
+  }, 5 * 60 * 1000);
 </script>
+{% endif %}
 
 </body>
 </html>
