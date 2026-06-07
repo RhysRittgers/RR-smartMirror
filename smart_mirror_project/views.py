@@ -4,10 +4,10 @@ from django.http import HttpResponse
 
 def home(request):
     host = request.get_host()
-    print("👀 Mirror home hit. User:", request.user)
+    print("Mirror home hit. User:", request.user)
     print("Is user authenticated?", request.user.is_authenticated)
     print("Logged in user:", request.user)
-    print(f" 🌐 host connected: {host}")
+    print(f"host connected: {host}")
     
     if host.startswith("mirror."):
         if request.user.is_authenticated:

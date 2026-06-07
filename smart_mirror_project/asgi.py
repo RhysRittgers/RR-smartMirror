@@ -4,7 +4,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.sessions import SessionMiddlewareStack
 
-# ✅ Set settings module BEFORE loading Django/URLs
+#set settings module BEFORE loading Django/URLs
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "smart_mirror_project.settings")
 
 # Create the Django ASGI app first
@@ -16,8 +16,9 @@ from Message.routing import websocket_urlpatterns as message_ws
 from Calendar.routing import websocket_urlpatterns as calendar_ws
 from Authentication.routing import websocket_urlpatterns as auth_ws
 from spotify.routing import websocket_urlpatterns as spotify_ws
+from LEDs.routing import websocket_urlpatterns as leds_ws
 
-combined_websockets = stocks_ws + message_ws + calendar_ws + auth_ws + spotify_ws  # ✅ add spotify
+combined_websockets = stocks_ws + message_ws + calendar_ws + auth_ws + spotify_ws + leds_ws
 
 application = ProtocolTypeRouter({
     "http": django_asgi_app,

@@ -16,15 +16,12 @@ def dashboard_view(request):
 
 @csrf_exempt
 def update_message(request):
-    print("🔥 update_message hit")
-    print("User:", request.user)
-    print("Is Authenticated:", request.user.is_authenticated)
 
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
     message = request.POST.get("message")
-    print("📨 Received message:", message)
+    print("Received message:", message)
 
     if not message:
         return JsonResponse({"error": "No message provided"}, status=400)

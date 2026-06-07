@@ -426,17 +426,17 @@
       window.MESSAGE_WS = ws;
 
       ws.onopen = () => {
-        console.log("✅ MESSAGE_WS connected to mirror");
+        console.log("MESSAGE_WS connected to mirror");
       };
       ws.onclose = () => {
-        console.log("⚠️ MESSAGE_WS closed");
+        console.log("MESSAGE_WS closed");
         window.MESSAGE_WS = null;
       };
       ws.onerror = (e) => {
-        console.error("❌ MESSAGE_WS error:", e);
+        console.error("MESSAGE_WS error:", e);
       };
     } catch (err) {
-      console.error("❌ Failed to create MESSAGE_WS:", err);
+      console.error("Failed to create MESSAGE_WS:", err);
     }
   })();
 
@@ -447,17 +447,17 @@
       window.CALENDAR_WS = ws;
 
       ws.onopen = () => {
-        console.log("✅ CALENDAR_WS connected to mirror");
+        console.log("CALENDAR_WS connected to mirror");
       };
       ws.onclose = () => {
-        console.log("⚠️ CALENDAR_WS closed");
+        console.log("CALENDAR_WS closed");
         window.CALENDAR_WS = null;
       };
       ws.onerror = (e) => {
-        console.error("❌ CALENDAR_WS error:", e);
+        console.error("CALENDAR_WS error:", e);
       };
     } catch (err) {
-      console.error("❌ Failed to create CALENDAR_WS:", err);
+      console.error("Failed to create CALENDAR_WS:", err);
     }
   })();
 

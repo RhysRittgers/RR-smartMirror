@@ -12,9 +12,9 @@ from .models import CalendarEvent
 @login_required
 def upcoming_events(request):
     """
-    Return events for the current week (Mon→Sun) in the project's TIME_ZONE.
+    Return events for the current week (Mon -> Sun) in the project's TIME_ZONE.
     Frontend renders a fixed-week grid and expects all days of this week,
-    not just 'today → +7'.
+    not just 'today -> +7'.
     """
     # Local date in settings.TIME_ZONE
     today_local = timezone.localtime().date()          # respects TIME_ZONE

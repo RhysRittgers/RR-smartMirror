@@ -16,6 +16,7 @@ urlpatterns = [
     path('diag/', diag, name='diag'),
     path('Dashboard/', include(('Dashboard.urls', 'Dashboard'), namespace='Dashboard')),
     path('spotify/', include('spotify.urls')),
+    path('LEDs/', include('LEDs.urls'))
 ]
 
 if settings.DEBUG:

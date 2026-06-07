@@ -5,7 +5,6 @@ from .models import WeatherPreference
 from django.conf import settings
 import requests
 
-# Create your views here.
 @login_required
 def weather_preference(request):
     
