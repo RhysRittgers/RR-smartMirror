@@ -597,9 +597,11 @@
     });
   })();
 
-  // ---------- LED CONTROLS ----------
+// ---------- LED CONTROLS ----------
 async function sendLEDCommand(url) {
   try {
+    console.log("Sending LED command:", url);
+
     const res = await fetch(url, {
       method: 'POST',
       headers: {
@@ -609,12 +611,13 @@ async function sendLEDCommand(url) {
       cache: 'no-store'
     });
 
-    const data = await res.json();
-
-    console.log('LED response:', data);
+    const text = await res.text();
+    console.log("LED raw response:", res.status, text);
+    alert(`LED response: ${res.status} ${text}`);
 
   } catch (err) {
     console.error('LED command failed:', err);
+    alert(`LED command failed: ${err}`);
   }
 }
 
