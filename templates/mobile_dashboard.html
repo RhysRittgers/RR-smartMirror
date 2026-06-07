@@ -137,6 +137,10 @@
         <div class="circle glyph"><i data-lucide="cloud-sun"></i></div>
         <div class="label">Weather</div>
       </a>
+      <a class="tile" data-goto="page-leds">
+        <div class="circle glyph"><i data-lucide="lightbulb"></i></div>
+        <div class="label">Lights</div>
+      </a>
     </div>
 
     <!-- NEW: Footer quick access -->
@@ -251,6 +255,21 @@
       <small class="muted">(current place holder -> eventually will allow users to select weather preferences)</small>
     </div>
   </section>
+
+  <!-- ================== LED PAGE ================== -->
+  <section id="page-leds" class="page">
+  <div class="backbar">
+    <button class="back-btn" data-goto="page-home">← Home</button>
+    <div class="section-title">Lights</div>
+  </div>
+
+  <div class="card">
+    <button class="primary" onclick="sendLEDCommand('/LEDs/turn_on/')">Lights On</button>
+    <button class="primary" onclick="sendLEDCommand('/LEDs/turn_off/')">Lights Off</button>
+    <button class="primary" onclick="sendLEDCommand('/LEDs/vanity/')">Vanity</button>
+    <button class="primary" onclick="sendLEDCommand('/LEDs/party_mode/')">Party Mode</button>
+  </div>
+</section>
 
   <!-- ================== MODULE STORE PAGE ================== -->
   <section id="page-store" class="page">
@@ -577,6 +596,28 @@
       }
     });
   })();
+
+  // ---------- LED CONTROLS ----------
+async function sendLEDCommand(url) {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      credentials: 'include',
+      cache: 'no-store'
+    });
+
+    const data = await res.json();
+
+    console.log('LED response:', data);
+
+  } catch (err) {
+    console.error('LED command failed:', err);
+  }
+}
+
 </script>
 
 </body>
