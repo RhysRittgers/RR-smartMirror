@@ -15,6 +15,8 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "insecure-default-key")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "dummy-weather-key")
 STOCKS_API_KEY  = os.getenv("STOCKS_API_KEY",  "dummy-stocks-key")
+NASA_API_KEY = os.getenv("NASA_API_KEY", "dummy-nasa-key")
+
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 

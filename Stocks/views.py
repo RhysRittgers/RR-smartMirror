@@ -7,7 +7,7 @@ from .models import StockPreference
 
 @login_required
 def stock_prices(request):
-    API_KEY = settings.STOCKS_API_KEY  # Get Finnhub API key
+    API_KEY = settings.STOCKS_API_KEY
 
     # Get the user's stock preferences
     stock_pref = StockPreference.objects.filter(user=request.user).first()

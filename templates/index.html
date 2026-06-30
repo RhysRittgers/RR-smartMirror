@@ -43,6 +43,21 @@
     #sp-img { width:160px; height:160px; object-fit:cover; border-radius:10px; display:none; }
     #sp-title { margin-top:8px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
     #sp-artist { opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+
+    /* --- NASA APOD --- */
+    .nasa-card { margin-top: 12px; }
+    #nasa-apod-img {
+      width: 260px;
+      max-height: 170px;
+      object-fit: cover;
+      border-radius: 10px;
+      display: none;
+    }
+    #nasa-apod-title {
+      margin-top: 6px;
+      font-size: .9rem;
+      opacity: .85;
+    }
   </style>
 </head>
 <body>
@@ -82,6 +97,12 @@
         <div id="sp-title" style="margin-top:8px;font-weight:bold;"></div>
         <div id="sp-artist" style="opacity:0.8;"></div>
       </div>
+    </div>
+
+    <h2 class="section-title">🌌 NASA APOD</h2>
+    <div id="nasa-apod" class="nasa-card">
+      <img id="nasa-apod-img" alt="NASA Astronomy Photo of the Day">
+      <div id="nasa-apod-title"></div>
     </div>
   </div>
 </div>
@@ -333,12 +354,15 @@
     fetchMessage();
     fetchCalendarEvents();
     fetchWeather();
+    fetchNasaApod();
 
     setInterval(() => {
       fetchMessage();
       fetchCalendarEvents();
       fetchWeather();
     }, 5 * 60 * 1000);
+
+    setInterval(fetchNasaApod, 6 * 60 * 60 * 1000);
   });
 </script>
 
@@ -471,6 +495,30 @@
         ${hum !== null ? `<div class="pair"><span class="label">Humidity</span><span>${hum}%</span></div>` : ''}
       </div>
     `;
+  }
+
+  function fetchNasaApod() {
+    fetch('/NASA/apod/', { credentials: 'include', cache: 'no-store' })
+      .then(r => r.json())
+      .then(displayNasaApod)
+      .catch(err => console.error('Error fetching NASA APOD:', err));
+  }
+
+  function displayNasaApod(data) {
+    const img = document.getElementById('nasa-apod-img');
+    const title = document.getElementById('nasa-apod-title');
+
+    if (!img || !title) return;
+
+    if (data.error) {
+      title.textContent = data.error;
+      img.style.display = 'none';
+      return;
+    }
+
+    img.src = data.image_url;
+    img.style.display = 'block';
+    title.textContent = data.title || '';
   }
 </script>
 

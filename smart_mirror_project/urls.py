@@ -16,9 +16,9 @@ urlpatterns = [
     path('diag/', diag, name='diag'),
     path('Dashboard/', include(('Dashboard.urls', 'Dashboard'), namespace='Dashboard')),
     path('spotify/', include('spotify.urls')),
-    path('LEDs/', include('LEDs.urls'))
+    path('LEDs/', include('LEDs.urls')),
+    path('NASA/', include('Nasa.urls')),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
