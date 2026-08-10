@@ -43,6 +43,7 @@ def get_apod(request):
             "image_url": image_url,
             "date": data.get("date"),
             "media_type": media_type,
+            "explanation": data.get("explanation", ""),
         }
         
         cache.set(CACHE_KEY, result, 60 * 60 * 6)
