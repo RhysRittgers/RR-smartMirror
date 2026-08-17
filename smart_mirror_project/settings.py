@@ -136,9 +136,23 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # --------------------
 # Channels
 # --------------------
-CHANNEL_LAYERS = {
-    "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-}
+REDIS_URL = os.getenv("REDIS_URL")
+
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL],
+            },
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
 
 # --------------------
 # CORS
