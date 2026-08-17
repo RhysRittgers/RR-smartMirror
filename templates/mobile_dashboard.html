@@ -213,16 +213,57 @@
     </div>
   </section>
 
-  <!-- ================== STOCKS PAGE (placeholder UI only) ================== -->
-  <section id="page-stocks" class="page">
-    <div class="backbar">
-      <button class="back-btn" data-goto="page-home">← Home</button>
-      <div class="section-title">Stocks</div>
+  <!-- ================== STOCKS PAGE ================== -->
+<section id="page-stocks" class="page">
+  <div class="backbar">
+    <button class="back-btn" data-goto="page-home">← Home</button>
+    <div class="section-title">Stocks</div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 12px">Current Stocks</h3>
+
+    <div id="stockPreferencesList">
+      <small class="muted">Loading stocks...</small>
     </div>
-    <div class="card">
-      <small class="muted">(current place holder -> eventually will allow users to select stock ticker preferences)</small>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 12px">Manage Stocks</h3>
+
+    <input
+      id="stockSymbolInput"
+      type="text"
+      maxlength="10"
+      placeholder="Ticker symbol (e.g. NVDA)"
+      autocomplete="off"
+    >
+
+    <div class="row" style="flex-wrap:wrap;gap:10px">
+      <button
+        id="addStockBtn"
+        class="primary"
+        type="button"
+      >
+        Add Stock
+      </button>
+
+      <button
+        id="removeStockBtn"
+        class="primary"
+        type="button"
+      >
+        Remove Stock
+      </button>
     </div>
-  </section>
+
+    <small
+      id="stockPreferenceStatus"
+      class="muted"
+      style="display:block;margin-top:10px"
+    ></small>
+  </div>
+</section>
 
   <!-- ================== SPOTIFY PAGE ================== -->
   <section id="page-spotify" class="page">
@@ -596,6 +637,267 @@
       }
     });
   })();
+
+  // ---------- STOCK PREFERENCES ----------
+(function wireStockPreferences() {
+  const input =
+    document.getElementById(
+      "stockSymbolInput"
+    );
+
+  const addBtn =
+    document.getElementById(
+      "addStockBtn"
+    );
+
+  const removeBtn =
+    document.getElementById(
+      "removeStockBtn"
+    );
+
+  const statusEl =
+    document.getElementById(
+      "stockPreferenceStatus"
+    );
+
+  const listEl =
+    document.getElementById(
+      "stockPreferencesList"
+    );
+
+  if (
+    !input ||
+    !addBtn ||
+    !removeBtn ||
+    !statusEl ||
+    !listEl
+  ) {
+    return;
+  }
+
+  function setStatus(message) {
+    statusEl.textContent =
+      message || "";
+  }
+
+  function getSymbol() {
+    const symbol =
+      (input.value || "")
+        .trim()
+        .toUpperCase();
+
+    input.value = symbol;
+
+    return symbol;
+  }
+
+  function renderSymbols(symbols) {
+    if (!symbols.length) {
+      listEl.innerHTML =
+        `<small class="muted">
+          No stocks selected.
+        </small>`;
+
+      return;
+    }
+
+    listEl.innerHTML =
+      symbols
+        .map(symbol => `
+          <div
+            style="
+              padding:8px 0;
+              font-weight:600;
+              border-bottom:
+                1px solid rgba(255,255,255,.06);
+            "
+          >
+            ${symbol}
+          </div>
+        `)
+        .join("");
+  }
+
+  async function loadStocks() {
+    listEl.innerHTML =
+      `<small class="muted">
+        Loading stocks...
+      </small>`;
+
+    try {
+      const response = await fetch(
+        "/Stocks/user_stocks/",
+        {
+          credentials: "include",
+          cache: "no-store"
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        listEl.innerHTML =
+          `<small class="muted">
+            Unable to load stocks.
+          </small>`;
+
+        return;
+      }
+
+      const symbols =
+        Object.keys(
+          data.stocks || {}
+        );
+
+      renderSymbols(symbols);
+
+    } catch (error) {
+      console.error(
+        "Load stocks error:",
+        error
+      );
+
+      listEl.innerHTML =
+        `<small class="muted">
+          Unable to load stocks.
+        </small>`;
+    }
+  }
+
+  async function updateStock(
+    method,
+    endpoint
+  ) {
+    const symbol = getSymbol();
+
+    if (!symbol) {
+      setStatus(
+        "Enter a ticker symbol."
+      );
+
+      return;
+    }
+
+    setStatus(
+      method === "POST"
+        ? "Adding..."
+        : "Removing..."
+    );
+
+    try {
+      const response =
+        await fetch(
+          endpoint,
+          {
+            method: method,
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              "X-CSRFToken":
+                getCookie(
+                  "csrftoken"
+                )
+            },
+
+            credentials:
+              "include",
+
+            cache:
+              "no-store",
+
+            body:
+              JSON.stringify({
+                symbol: symbol
+              })
+          }
+        );
+
+      const data =
+        await response
+          .json()
+          .catch(() => ({}));
+
+      if (
+        !response.ok ||
+        data.success === false
+      ) {
+        setStatus(
+          data.error ||
+          "Unable to update stocks."
+        );
+
+        return;
+      }
+
+      input.value = "";
+
+      if (method === "POST") {
+        setStatus(
+          `${data.symbol || symbol} added`
+        );
+      } else {
+        setStatus(
+          `${data.symbol || symbol} removed`
+        );
+      }
+
+      await loadStocks();
+
+      setTimeout(
+        () => setStatus(""),
+        1800
+      );
+
+    } catch (error) {
+      console.error(
+        "Stock preference update error:",
+        error
+      );
+
+      setStatus(
+        "Network error"
+      );
+    }
+  }
+
+  addBtn.addEventListener(
+    "click",
+    () => {
+      updateStock(
+        "POST",
+        "/Stocks/add_stock/"
+      );
+    }
+  );
+
+  removeBtn.addEventListener(
+    "click",
+    () => {
+      updateStock(
+        "DELETE",
+        "/Stocks/remove_stock/"
+      );
+    }
+  );
+
+  // Reload the current list whenever
+  // the Stocks page is opened.
+  document
+    .querySelectorAll(
+      '[data-goto="page-stocks"]'
+    )
+    .forEach(button => {
+      button.addEventListener(
+        "click",
+        () => {
+          loadStocks();
+        }
+      );
+    });
+})();
 
   // ---------- LED CONTROLS ----------
 async function sendLEDCommand(url) {

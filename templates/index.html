@@ -251,57 +251,157 @@
 
   function connectStocksSocket() {
     const stocks = {};
-    const stocksSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/Stocks/");
-
+    let activeSymbols = new Set();
+    const stocksSocket = new WebSocket(
+      "wss://mirror.rr-smartmirror.com/ws/Stocks/"
+    );
+  
     stocksSocket.onopen = () => {
       console.log("Stocks WebSocket connected");
     };
-
+  
     stocksSocket.onmessage = (event) => {
       let data;
-      try { data = JSON.parse(event.data); } catch { return; }
-
-      if (data.type === 'trade' && data.data) {
+  
+      try {
+        data = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+  
+      // Our Django consumer sends this whenever the user's
+      // selected stock list changes.
+      if (
+        data.type === "stock_preferences_changed" &&
+        Array.isArray(data.symbols)
+      ) {
+        activeSymbols = new Set(data.symbols);
+  
+        // Remove cached stock data for deleted symbols.
+        Object.keys(stocks).forEach(symbol => {
+          if (!activeSymbols.has(symbol)) {
+            delete stocks[symbol];
+          }
+        });
+  
+        // Remove deleted stock cards from the mirror.
+        document
+          .querySelectorAll("#stocksGrid .stock")
+          .forEach(stockDiv => {
+            const symbol = stockDiv.dataset.symbol;
+  
+            if (!activeSymbols.has(symbol)) {
+              stockDiv.remove();
+            }
+          });
+  
+        // Make sure every selected stock has a card.
+        data.symbols.forEach(symbol => {
+          ensureStockDisplay(symbol);
+        });
+  
+        return;
+      }
+  
+      // Existing live Finnhub price stream.
+      if (data.type === "trade" && data.data) {
         data.data.forEach(trade => {
           const symbol = trade.s;
           const price = trade.p;
 
-          stocks[symbol] = stocks[symbol] || { price, previousPrice: price };
-          stocks[symbol].previousPrice = stocks[symbol].price;
+          if (!activeSymbols.has(symbol)) {
+            return;
+          }
+  
+          stocks[symbol] = stocks[symbol] || {
+            price: price,
+            previousPrice: price
+          };
+  
+          stocks[symbol].previousPrice =
+            stocks[symbol].price;
+  
           stocks[symbol].price = price;
-
+  
           updateStockDisplay(symbol);
         });
       }
     };
-
+  
     stocksSocket.onerror = (error) => {
-      console.error("Stocks WebSocket error:", error);
+      console.error(
+        "Stocks WebSocket error:",
+        error
+      );
+  
       stocksSocket.close();
     };
-
+  
     stocksSocket.onclose = () => {
-      console.warn("Stocks WebSocket closed. Reconnecting in 5 seconds...");
-      setTimeout(connectStocksSocket, 5000);
+      console.warn(
+        "Stocks WebSocket closed. Reconnecting in 5 seconds..."
+      );
+  
+      setTimeout(
+        connectStocksSocket,
+        5000
+      );
     };
-
-    function updateStockDisplay(symbol) {
-      const grid = document.getElementById('stocksGrid');
-      let stockDiv = document.getElementById(`stock-${symbol}`);
-
+  
+    function ensureStockDisplay(symbol) {
+      const grid =
+        document.getElementById("stocksGrid");
+  
+      let stockDiv =
+        document.getElementById(
+          `stock-${symbol}`
+        );
+  
       if (!stockDiv) {
-        stockDiv = document.createElement('div');
+        stockDiv =
+          document.createElement("div");
+  
         stockDiv.id = `stock-${symbol}`;
-        stockDiv.classList.add('stock');
-        stockDiv.innerHTML = `<div class="stock-name">${symbol}</div><div class="stock-price" id="price-${symbol}"></div>`;
+        stockDiv.dataset.symbol = symbol;
+        stockDiv.classList.add("stock");
+  
+        stockDiv.innerHTML = `
+          <div class="stock-name">
+            ${symbol}
+          </div>
+  
+          <div
+            class="stock-price"
+            id="price-${symbol}"
+          >
+            Waiting for market data...
+          </div>
+        `;
+  
         grid.appendChild(stockDiv);
       }
-
-      const priceDiv = document.getElementById(`price-${symbol}`);
+  
+      return stockDiv;
+    }
+  
+    function updateStockDisplay(symbol) {
+      ensureStockDisplay(symbol);
+  
+      const priceDiv =
+        document.getElementById(
+          `price-${symbol}`
+        );
+  
       const stock = stocks[symbol];
-      const up = stock.price > stock.previousPrice;
-
-      priceDiv.innerHTML = `$${stock.price.toFixed(2)} <span class="${up ? 'up' : 'down'}">${up ? '▲' : '▼'}</span>`;
+  
+      const up =
+        stock.price > stock.previousPrice;
+  
+      priceDiv.innerHTML =
+        `$${stock.price.toFixed(2)} ` +
+        `<span class="${up ? "up" : "down"}">` +
+        `${up ? "▲" : "▼"}` +
+        `</span>`;
     }
   }
 
