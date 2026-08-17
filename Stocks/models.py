@@ -1,13 +1,24 @@
 from django.db import models
 from django.contrib.auth.models import User
-
-# Create your models here.
 class StockPreference(models.Model):
-	user			  = models.ForeignKey(User, on_delete=models.CASCADE)
-	stock_preference_one = models.CharField(max_length=100)
-	stock_preference_two = models.CharField(max_length=100)
-	stock_preference_three = models.CharField(max_length=100)
-	stock_preference_four = models.CharField(max_length=100)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="stock_preferences"
+    )
 
-	def __str__(self):
-		return(f"{self.user.username}' stock preferences'")
+    symbol = models.CharField(max_length=10)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "symbol"],
+                name="unique_user_stock_symbol"
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        self.symbol = self.symbol.strip().upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.username}: {self.symbol}"
