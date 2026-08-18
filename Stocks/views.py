@@ -6,6 +6,7 @@ import requests
 from .services import add_user_symbol, get_user_symbols, remove_stock_symbol, create_stock_alert, remove_stock_alert
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.views.decorators.csrf import csrf_exempt
 
 def broadcast_stock_preference_change(user):
     channel_layer = get_channel_layer()
@@ -16,7 +17,7 @@ def broadcast_stock_preference_change(user):
             "type": "stock_preferences_changed"
         }
     )
-
+@csrf_exempt
 @login_required
 def stock_prices(request):
 
@@ -72,6 +73,7 @@ def stock_prices(request):
         "stocks": stock_data
     })
 
+@csrf_exempt
 @login_required    
 def add_stock(request):
     if request.method != "POST":
@@ -121,6 +123,7 @@ def add_stock(request):
         
     return JsonResponse(result)
 
+@csrf_exempt
 @login_required
 def remove_stock(request):
     if request.method != "DELETE":
@@ -169,8 +172,12 @@ def remove_stock(request):
     
     return JsonResponse(result)
 
+@csrf_exempt
+@login_required
 def create_alert(request):
     pass
 
+@csrf_exempt
+@login_required
 def remove_alert(request):
     pass
