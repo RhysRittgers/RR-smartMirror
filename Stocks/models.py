@@ -45,4 +45,22 @@ class StockAlert(models.Model):
         ]
     )
 
+    active = models.BooleanField(default=True)
+
     triggered = models.BooleanField(default=False)
+
+    triggered_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    def save(self, *args, **kwargs):
+        self.symbol = self.symbol.strip().upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"{self.user.username}: "
+            f"{self.symbol} {self.direction} "
+            f"${self.target_price}"
+        )
