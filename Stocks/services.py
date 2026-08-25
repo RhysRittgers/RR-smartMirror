@@ -230,3 +230,23 @@ def get_active_alert_symbols():
         .values_list("symbol", flat=True)
         .distinct()
     )
+    
+def get_stream_symbols():
+    preference_symbols = set(
+        StockPreference.objects
+        .exclude(symbol="")
+        .values_list("symbol", flat=True)
+    )
+
+    alert_symbols = set(
+        StockAlert.objects
+        .filter(
+            active=True,
+            triggered=False
+        )
+        .values_list("symbol", flat=True)
+    )
+
+    return list(
+        preference_symbols | alert_symbols
+    )

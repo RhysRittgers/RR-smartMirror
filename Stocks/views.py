@@ -121,6 +121,7 @@ def add_stock(request):
     
     if result.get("success"):
         broadcast_stock_preference_change(request.user)
+        publish_alert_subscriptions_changed()
         
     return JsonResponse(result)
 
@@ -170,6 +171,7 @@ def remove_stock(request):
     
     if result.get("success"):
         broadcast_stock_preference_change(request.user)
+        publish_alert_subscriptions_changed()
     
     return JsonResponse(result)
 

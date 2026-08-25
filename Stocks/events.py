@@ -32,3 +32,15 @@ def publish_alert_subscriptions_changed():
             "type": "alert_subscriptions_changed"
         }
     )
+    
+def publish_stock_price_update(symbol, current_price):
+    channel_layer = get_channel_layer()
+
+    async_to_sync(channel_layer.group_send)(
+        "stocks_live_prices",
+        {
+            "type": "stock_price_update",
+            "symbol": symbol,
+            "current_price": current_price,
+        }
+    )
