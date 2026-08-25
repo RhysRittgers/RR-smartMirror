@@ -281,8 +281,8 @@ async def monitor_stock_alerts():
         ) as ws:
 
             print(
-                "Stock alert monitor connected "
-                "to Finnhub."
+                "Stock alert monitor connected to Finnhub.",
+                flush=True
             )
 
             # Initial subscription setup.

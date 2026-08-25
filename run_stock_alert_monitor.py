@@ -13,6 +13,11 @@ from Stocks.alert_monitor import monitor_stock_alerts
 
 
 if __name__ == "__main__":
-    asyncio.run(
-        monitor_stock_alerts()
+    print(
+        "Starting stock alert monitor process...",
+        flush=True
     )
+
+asyncio.run(
+    monitor_stock_alerts()
+)
