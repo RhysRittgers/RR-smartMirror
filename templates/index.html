@@ -22,6 +22,7 @@
       display:flex; align-items:center; gap:12px;
       margin: 0 0 8px 0; padding:0;
     }
+
     .section-title::after{
       content:""; flex:1; height:1px; background:linear-gradient(90deg, rgba(255,255,255,.25), rgba(255,255,255,.08));
       transform: translateY(2px);
@@ -53,16 +54,44 @@
       border-radius: 10px;
       display: none;
     }
+
     #nasa-apod-title {
       margin-top: 6px;
       font-size: .9rem;
       opacity: .85;
     }
+
+    /* --- Triggered stock alerts --- */
+    .stock.stock-alert-above .stock-price {
+      color: #4cff7a;
+      text-shadow: 0 0 10px rgba(76,255,122,.35);
+    }
+
+    .stock.stock-alert-below .stock-price {
+      color: #ff5252;
+      text-shadow: 0 0 10px rgba(255,82,82,.35);
+    }
+
+    .stock-alert-status {
+      margin-top: 4px;
+      font-size: .78rem;
+      opacity: .85;
+    }
+
+    .stock.stock-alert-above .stock-alert-status {
+      color: #4cff7a;
+    }
+
+    .stock.stock-alert-below .stock-alert-status {
+      color: #ff5252;
+    }
   </style>
 </head>
+
 <body>
 
 {% if user.is_authenticated %}
+
 <header>
   <div class="clock-container">
     <p id="digitalClock">Loading time...</p>
@@ -70,614 +99,2011 @@
 </header>
 
 <div class="dashboard-container">
+
   <!-- Left Column -->
   <div class="left-section">
+
     <h2 class="section-title">Upcoming Events</h2>
+
     <div id="calendarMonth" class="calendar-month"></div>
+
     <div class="calendar-container" id="calendarEvents">
       <p>Loading events...</p>
     </div>
 
     <h2 class="section-title">Live Stock Prices</h2>
-    <div class="stock-grid" id="stocksGrid"></div>
+
+    <div
+      class="stock-grid"
+      id="stocksGrid"
+    ></div>
+
   </div>
 
   <!-- Center Column -->
-  <div id="mirror-message" class="message-container">Loading message...</div>
+  <div
+    id="mirror-message"
+    class="message-container"
+  >
+    Loading message...
+  </div>
 
   <!-- Right Column -->
   <div class="right-section">
+
     <h2 class="section-title">🌤 Weather</h2>
-    <div class="weather-container weather-card" id="weatherData"><p>Loading weather...</p></div>
+
+    <div
+      class="weather-container weather-card"
+      id="weatherData"
+    >
+      <p>Loading weather...</p>
+    </div>
 
     <h2 class="section-title">Now Playing</h2>
+
     <div id="sp-box">
-      <img id="sp-img" style="border-radius:10px;display:none">
+
+      <img
+        id="sp-img"
+        style="border-radius:10px;display:none"
+      >
+
       <div>
-        <div id="sp-title" style="margin-top:8px;font-weight:bold;"></div>
-        <div id="sp-artist" style="opacity:0.8;"></div>
+
+        <div
+          id="sp-title"
+          style="margin-top:8px;font-weight:bold;"
+        ></div>
+
+        <div
+          id="sp-artist"
+          style="opacity:0.8;"
+        ></div>
+
       </div>
+
     </div>
 
     <h2 class="section-title">NASA APOD</h2>
-    <div id="nasa-apod" class="nasa-card">
-      <img id="nasa-apod-img" alt="NASA Astronomy Photo of the Day">
+
+    <div
+      id="nasa-apod"
+      class="nasa-card"
+    >
+
+      <img
+        id="nasa-apod-img"
+        alt="NASA Astronomy Photo of the Day"
+      >
+
       <div id="nasa-apod-title"></div>
+
     </div>
+
   </div>
+
 </div>
 
+
 <!-- ===== Time helpers (12/24h) ===== -->
+
 <script>
+
   window.USE_24H = false;
 
   function formatTimeString(hhmm) {
-    if (!hhmm || hhmm === 'All day') return hhmm || '';
+
+    if (!hhmm || hhmm === 'All day') {
+      return hhmm || '';
+    }
+
     const parts = hhmm.split(':');
-    if (parts.length < 2) return hhmm;
+
+    if (parts.length < 2) {
+      return hhmm;
+    }
+
     let h = parseInt(parts[0], 10);
-    const mm = (parts[1] || '00').padStart(2,'0');
-    if (window.USE_24H) return `${String(h).padStart(2,'0')}:${mm}`;
-    const ampm = h >= 12 ? 'PM' : 'AM';
+
+    const mm =
+      (parts[1] || '00').padStart(2,'0');
+
+    if (window.USE_24H) {
+
+      return (
+        `${String(h).padStart(2,'0')}:${mm}`
+      );
+
+    }
+
+    const ampm =
+      h >= 12
+        ? 'PM'
+        : 'AM';
+
     h = h % 12 || 12;
-    return `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
+
+    return (
+      `${String(h).padStart(2,'0')}:${mm} ${ampm}`
+    );
   }
+
 
   function reformatAllEventTimes() {
-    document.querySelectorAll('[data-time-raw]').forEach(el => {
-      el.textContent = formatTimeString(el.getAttribute('data-time-raw'));
-    });
+
+    document
+      .querySelectorAll(
+        '[data-time-raw]'
+      )
+      .forEach(el => {
+
+        el.textContent =
+          formatTimeString(
+            el.getAttribute(
+              'data-time-raw'
+            )
+          );
+
+      });
+
   }
+
 </script>
 
+
 <!-- ===== WEBSOCKETS ===== -->
+
 <script>
+
   function getWeekStart() {
-    const now = new Date();
-    const js = now.getDay();
-    const offset = (js + 6) % 7;
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
+
+    const now =
+      new Date();
+
+    const js =
+      now.getDay();
+
+    const offset =
+      (js + 6) % 7;
+
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - offset
+    );
+
   }
+
 
   function ymd(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+
+    const y =
+      d.getFullYear();
+
+    const m =
+      String(
+        d.getMonth() + 1
+      ).padStart(2, '0');
+
+    const day =
+      String(
+        d.getDate()
+      ).padStart(2, '0');
+
     return `${y}-${m}-${day}`;
+
   }
+
 
   function fetchMessage() {
-    fetch('/Message/user_message/', { credentials: 'include', cache: 'no-store' })
+
+    fetch(
+      '/Message/user_message/',
+      {
+        credentials: 'include',
+        cache: 'no-store'
+      }
+    )
       .then(r => r.json())
       .then(data => {
+
         if (data.message) {
-          const msgEl = document.getElementById("mirror-message");
-          if (msgEl) msgEl.innerText = data.message;
+
+          const msgEl =
+            document.getElementById(
+              "mirror-message"
+            );
+
+          if (msgEl) {
+            msgEl.innerText =
+              data.message;
+          }
+
         }
+
       })
-      .catch(err => console.error("Error fetching message:", err));
+      .catch(err =>
+        console.error(
+          "Error fetching message:",
+          err
+        )
+      );
+
   }
+
 
   function connectMessageSocket() {
-    const mirrorSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/mirror");
+
+    const mirrorSocket =
+      new WebSocket(
+        "wss://mirror.rr-smartmirror.com/ws/mirror"
+      );
 
     mirrorSocket.onopen = () => {
-      console.log("Message WebSocket connected");
+
+      console.log(
+        "Message WebSocket connected"
+      );
+
     };
+
 
     mirrorSocket.onmessage = (event) => {
+
       let data;
-      try { data = JSON.parse(event.data); } catch { return; }
+
+      try {
+
+        data =
+          JSON.parse(
+            event.data
+          );
+
+      } catch {
+
+        return;
+
+      }
+
 
       if (data.message) {
-        const msgEl = document.getElementById("mirror-message");
+
+        const msgEl =
+          document.getElementById(
+            "mirror-message"
+          );
+
         if (msgEl) {
-          msgEl.innerText = data.message;
-          msgEl.classList.add("flash");
-          setTimeout(() => msgEl.classList.remove("flash"), 500);
+
+          msgEl.innerText =
+            data.message;
+
+          msgEl.classList.add(
+            "flash"
+          );
+
+          setTimeout(
+            () =>
+              msgEl.classList.remove(
+                "flash"
+              ),
+            500
+          );
+
         }
+
       }
 
-      if (data.type === "time_pref") {
-        window.USE_24H = !!data.use_24h;
-        if (typeof updateClock === "function") updateClock();
-        if (typeof reformatAllEventTimes === "function") reformatAllEventTimes();
+
+      if (
+        data.type ===
+        "time_pref"
+      ) {
+
+        window.USE_24H =
+          !!data.use_24h;
+
+        if (
+          typeof updateClock ===
+          "function"
+        ) {
+          updateClock();
+        }
+
+        if (
+          typeof reformatAllEventTimes ===
+          "function"
+        ) {
+          reformatAllEventTimes();
+        }
+
       }
+
     };
 
-    mirrorSocket.onerror = (error) => {
-      console.error("Message WebSocket error:", error);
-      mirrorSocket.close();
-    };
+
+    mirrorSocket.onerror =
+      (error) => {
+
+        console.error(
+          "Message WebSocket error:",
+          error
+        );
+
+        mirrorSocket.close();
+
+      };
+
 
     mirrorSocket.onclose = () => {
-      console.warn("Message WebSocket closed. Reconnecting in 5 seconds...");
-      setTimeout(connectMessageSocket, 5000);
-    };
-  }
 
-  function connectCalendarSocket() {
-    const calendarSocket = new WebSocket("wss://mirror.rr-smartmirror.com/ws/calendar");
-
-    calendarSocket.onopen = () => {
-      console.log("Calendar WebSocket connected");
-    };
-
-    calendarSocket.onmessage = (event) => {
-      let data;
-      try { data = JSON.parse(event.data); } catch { return; }
-
-      const ev = data.event;
-      if (!ev) return;
-
-      const evDate = new Date(`${ev.event_date}T00:00:00`);
-      const wkStart = getWeekStart();
-      const wkEnd = new Date(wkStart);
-      wkEnd.setDate(wkStart.getDate() + 7);
-
-      if (evDate < wkStart || evDate >= wkEnd) return;
-
-      const dayName = evDate.toLocaleDateString('en-US', { weekday: 'long' });
-      const list = document.getElementById(`list-${dayName}`);
-
-      if (!list) {
-        fetchCalendarEvents();
-        return;
-      }
-
-      const placeholder = list.querySelector('li[data-placeholder="true"]');
-      if (placeholder) placeholder.remove();
-
-      const li = document.createElement('li');
-      const isAllDay = ev.event_time === 'All day';
-      const timeHTML = isAllDay
-        ? `<span data-time-raw="All day">All day</span>`
-        : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
-
-      li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
-      list.appendChild(li);
-    };
-
-    calendarSocket.onerror = (error) => {
-      console.error("Calendar WebSocket error:", error);
-      calendarSocket.close();
-    };
-
-    calendarSocket.onclose = () => {
-      console.warn("Calendar WebSocket closed. Reconnecting in 5 seconds...");
-      setTimeout(connectCalendarSocket, 5000);
-    };
-  }
-
-  function connectStocksSocket() {
-    const stocks = {};
-    let activeSymbols = new Set();
-    const stocksSocket = new WebSocket(
-      "wss://mirror.rr-smartmirror.com/ws/Stocks/"
-    );
-  
-    stocksSocket.onopen = () => {
-      console.log("Stocks WebSocket connected");
-    };
-  
-    stocksSocket.onmessage = (event) => {
-      let data;
-  
-      try {
-        data = JSON.parse(event.data);
-      } catch {
-        return;
-      }
-  
-      // Our Django consumer sends this whenever the user's
-      // selected stock list changes.
-      if (
-        data.type === "stock_preferences_changed" &&
-        Array.isArray(data.symbols)
-      ) {
-        activeSymbols = new Set(data.symbols);
-  
-        // Remove cached stock data for deleted symbols.
-        Object.keys(stocks).forEach(symbol => {
-          if (!activeSymbols.has(symbol)) {
-            delete stocks[symbol];
-          }
-        });
-  
-        // Remove deleted stock cards from the mirror.
-        document
-          .querySelectorAll("#stocksGrid .stock")
-          .forEach(stockDiv => {
-            const symbol = stockDiv.dataset.symbol;
-  
-            if (!activeSymbols.has(symbol)) {
-              stockDiv.remove();
-            }
-          });
-  
-        // Make sure every selected stock has a card.
-        data.symbols.forEach(symbol => {
-          ensureStockDisplay(symbol);
-        });
-  
-        return;
-      }
-  
-      // Existing live Finnhub price stream.
-      if (data.type === "trade" && data.data) {
-        data.data.forEach(trade => {
-          const symbol = trade.s;
-          const price = trade.p;
-
-          if (!activeSymbols.has(symbol)) {
-            return;
-          }
-  
-          stocks[symbol] = stocks[symbol] || {
-            price: price,
-            previousPrice: price
-          };
-  
-          stocks[symbol].previousPrice =
-            stocks[symbol].price;
-  
-          stocks[symbol].price = price;
-  
-          updateStockDisplay(symbol);
-        });
-      }
-    };
-  
-    stocksSocket.onerror = (error) => {
-      console.error(
-        "Stocks WebSocket error:",
-        error
-      );
-  
-      stocksSocket.close();
-    };
-  
-    stocksSocket.onclose = () => {
       console.warn(
-        "Stocks WebSocket closed. Reconnecting in 5 seconds..."
+        "Message WebSocket closed. Reconnecting in 5 seconds..."
       );
-  
+
       setTimeout(
-        connectStocksSocket,
+        connectMessageSocket,
         5000
       );
+
     };
-  
-    function ensureStockDisplay(symbol) {
+
+  }
+
+
+  function connectCalendarSocket() {
+
+    const calendarSocket =
+      new WebSocket(
+        "wss://mirror.rr-smartmirror.com/ws/calendar"
+      );
+
+    calendarSocket.onopen = () => {
+
+      console.log(
+        "Calendar WebSocket connected"
+      );
+
+    };
+
+
+    calendarSocket.onmessage =
+      (event) => {
+
+        let data;
+
+        try {
+
+          data =
+            JSON.parse(
+              event.data
+            );
+
+        } catch {
+
+          return;
+
+        }
+
+
+        const ev =
+          data.event;
+
+        if (!ev) {
+          return;
+        }
+
+
+        const evDate =
+          new Date(
+            `${ev.event_date}T00:00:00`
+          );
+
+        const wkStart =
+          getWeekStart();
+
+        const wkEnd =
+          new Date(wkStart);
+
+        wkEnd.setDate(
+          wkStart.getDate() + 7
+        );
+
+
+        if (
+          evDate < wkStart ||
+          evDate >= wkEnd
+        ) {
+          return;
+        }
+
+
+        const dayName =
+          evDate.toLocaleDateString(
+            'en-US',
+            {
+              weekday: 'long'
+            }
+          );
+
+        const list =
+          document.getElementById(
+            `list-${dayName}`
+          );
+
+
+        if (!list) {
+
+          fetchCalendarEvents();
+
+          return;
+
+        }
+
+
+        const placeholder =
+          list.querySelector(
+            'li[data-placeholder="true"]'
+          );
+
+        if (placeholder) {
+          placeholder.remove();
+        }
+
+
+        const li =
+          document.createElement(
+            'li'
+          );
+
+
+        const isAllDay =
+          ev.event_time ===
+          'All day';
+
+
+        const timeHTML =
+          isAllDay
+
+            ? `<span data-time-raw="All day">All day</span>`
+
+            : (
+                ev.event_time
+                  ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>`
+                  : ''
+              );
+
+
+        li.innerHTML =
+          `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
+
+
+        list.appendChild(li);
+
+      };
+
+
+    calendarSocket.onerror =
+      (error) => {
+
+        console.error(
+          "Calendar WebSocket error:",
+          error
+        );
+
+        calendarSocket.close();
+
+      };
+
+
+    calendarSocket.onclose =
+      () => {
+
+        console.warn(
+          "Calendar WebSocket closed. Reconnecting in 5 seconds..."
+        );
+
+        setTimeout(
+          connectCalendarSocket,
+          5000
+        );
+
+      };
+
+  }
+
+
+  function connectStocksSocket() {
+
+    const stocks = {};
+
+    let activeSymbols =
+      new Set();
+
+
+    const stocksSocket =
+      new WebSocket(
+        "wss://mirror.rr-smartmirror.com/ws/Stocks/"
+      );
+
+
+    stocksSocket.onopen =
+      () => {
+
+        console.log(
+          "Stocks WebSocket connected"
+        );
+
+      };
+
+
+    stocksSocket.onmessage =
+      (event) => {
+
+        let data;
+
+
+        try {
+
+          data =
+            JSON.parse(
+              event.data
+            );
+
+        } catch {
+
+          return;
+
+        }
+
+
+        // Current user's selected stock symbols changed.
+        if (
+          data.type ===
+            "stock_preferences_changed" &&
+          Array.isArray(
+            data.symbols
+          )
+        ) {
+
+          activeSymbols =
+            new Set(
+              data.symbols
+            );
+
+
+          // Remove cached stock data
+          // for deleted symbols.
+          Object
+            .keys(stocks)
+            .forEach(symbol => {
+
+              if (
+                !activeSymbols.has(
+                  symbol
+                )
+              ) {
+
+                delete stocks[
+                  symbol
+                ];
+
+              }
+
+            });
+
+
+          // Remove deleted stock cards.
+          document
+            .querySelectorAll(
+              "#stocksGrid .stock"
+            )
+            .forEach(stockDiv => {
+
+              const symbol =
+                stockDiv.dataset.symbol;
+
+              if (
+                !activeSymbols.has(
+                  symbol
+                )
+              ) {
+
+                stockDiv.remove();
+
+              }
+
+            });
+
+
+          // Ensure every selected stock
+          // currently has a display card.
+          data.symbols.forEach(
+            symbol => {
+
+              ensureStockDisplay(
+                symbol
+              );
+
+            }
+          );
+
+
+          return;
+        }
+
+
+        // =====================================================
+        // STOCK ALERT TRIGGERED
+        // =====================================================
+
+        if (
+          data.type ===
+          "stock_alert_triggered"
+        ) {
+
+          const symbol =
+            data.symbol;
+
+          const direction =
+            data.direction;
+
+          const targetPrice =
+            Number(
+              data.target_price
+            );
+
+          const currentPrice =
+            Number(
+              data.current_price
+            );
+
+
+          // Only show the alert if this stock
+          // is one of the stocks currently
+          // displayed on this mirror.
+          if (
+            !activeSymbols.has(
+              symbol
+            )
+          ) {
+            return;
+          }
+
+
+          const stockDiv =
+            ensureStockDisplay(
+              symbol
+            );
+
+
+          const alertDiv =
+            document.getElementById(
+              `alert-${symbol}`
+            );
+
+
+          // Remove any previous alert styling
+          // before applying the new alert.
+          stockDiv.classList.remove(
+            "stock-alert-above",
+            "stock-alert-below"
+          );
+
+
+          if (
+            direction ===
+            "above"
+          ) {
+
+            stockDiv.classList.add(
+              "stock-alert-above"
+            );
+
+
+            if (alertDiv) {
+
+              alertDiv.textContent =
+                `Alert: Above $${targetPrice.toFixed(2)} triggered`;
+
+            }
+
+          }
+
+          else if (
+            direction ===
+            "below"
+          ) {
+
+            stockDiv.classList.add(
+              "stock-alert-below"
+            );
+
+
+            if (alertDiv) {
+
+              alertDiv.textContent =
+                `Alert: Below $${targetPrice.toFixed(2)} triggered`;
+
+            }
+
+          }
+
+
+          // Immediately display the actual
+          // price that triggered the alert.
+          stocks[symbol] =
+            stocks[symbol] || {
+              price: currentPrice,
+              previousPrice: currentPrice
+            };
+
+
+          stocks[symbol].previousPrice =
+            stocks[symbol].price;
+
+
+          stocks[symbol].price =
+            currentPrice;
+
+
+          updateStockDisplay(
+            symbol
+          );
+
+
+          console.log(
+            `Stock alert triggered: ${symbol} ${direction} $${targetPrice}`
+          );
+
+
+          return;
+        }
+
+
+        // =====================================================
+        // LIVE STOCK PRICE
+        // =====================================================
+
+        if (
+          data.type === "trade" &&
+          data.data
+        ) {
+
+          data.data.forEach(
+            trade => {
+
+              const symbol =
+                trade.s;
+
+              const price =
+                trade.p;
+
+
+              if (
+                !activeSymbols.has(
+                  symbol
+                )
+              ) {
+
+                return;
+
+              }
+
+
+              stocks[symbol] =
+                stocks[symbol] || {
+                  price: price,
+                  previousPrice: price
+                };
+
+
+              stocks[symbol].previousPrice =
+                stocks[symbol].price;
+
+
+              stocks[symbol].price =
+                price;
+
+
+              updateStockDisplay(
+                symbol
+              );
+
+            }
+          );
+
+        }
+
+      };
+
+
+    stocksSocket.onerror =
+      (error) => {
+
+        console.error(
+          "Stocks WebSocket error:",
+          error
+        );
+
+
+        stocksSocket.close();
+
+      };
+
+
+    stocksSocket.onclose =
+      () => {
+
+        console.warn(
+          "Stocks WebSocket closed. Reconnecting in 5 seconds..."
+        );
+
+
+        setTimeout(
+          connectStocksSocket,
+          5000
+        );
+
+      };
+
+
+    function ensureStockDisplay(
+      symbol
+    ) {
+
       const grid =
-        document.getElementById("stocksGrid");
-  
+        document.getElementById(
+          "stocksGrid"
+        );
+
+
       let stockDiv =
         document.getElementById(
           `stock-${symbol}`
         );
-  
+
+
       if (!stockDiv) {
+
         stockDiv =
-          document.createElement("div");
-  
-        stockDiv.id = `stock-${symbol}`;
-        stockDiv.dataset.symbol = symbol;
-        stockDiv.classList.add("stock");
-  
+          document.createElement(
+            "div"
+          );
+
+
+        stockDiv.id =
+          `stock-${symbol}`;
+
+
+        stockDiv.dataset.symbol =
+          symbol;
+
+
+        stockDiv.classList.add(
+          "stock"
+        );
+
+
         stockDiv.innerHTML = `
+
           <div class="stock-name">
             ${symbol}
           </div>
-  
+
           <div
             class="stock-price"
             id="price-${symbol}"
           >
             Waiting for market data...
           </div>
+
+          <div
+            class="stock-alert-status"
+            id="alert-${symbol}"
+          ></div>
+
         `;
-  
-        grid.appendChild(stockDiv);
+
+
+        grid.appendChild(
+          stockDiv
+        );
+
       }
-  
+
+
       return stockDiv;
+
     }
-  
-    function updateStockDisplay(symbol) {
-      ensureStockDisplay(symbol);
-  
+
+
+    function updateStockDisplay(
+      symbol
+    ) {
+
+      ensureStockDisplay(
+        symbol
+      );
+
+
       const priceDiv =
         document.getElementById(
           `price-${symbol}`
         );
-  
-      const stock = stocks[symbol];
-  
+
+
+      const stock =
+        stocks[symbol];
+
+
       const up =
-        stock.price > stock.previousPrice;
-  
+        stock.price >
+        stock.previousPrice;
+
+
       priceDiv.innerHTML =
         `$${stock.price.toFixed(2)} ` +
         `<span class="${up ? "up" : "down"}">` +
         `${up ? "▲" : "▼"}` +
         `</span>`;
+
     }
+
   }
+
 
   function connectSettingsSocket() {
-    const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-    const ws = new WebSocket(`${scheme}://${location.host}/ws/settings/`);
 
-    ws.onopen = () => {
-      console.log("Settings WebSocket connected");
-    };
+    const scheme =
+      (
+        location.protocol ===
+        'https:'
+      )
+        ? 'wss'
+        : 'ws';
 
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
 
-        if (msg.type === 'time_pref') {
-          window.USE_24H = !!msg.use_24h;
-          if (typeof updateClock === 'function') updateClock();
-          reformatAllEventTimes();
-        }
-      } catch (_) {}
-    };
+    const ws =
+      new WebSocket(
+        `${scheme}://${location.host}/ws/settings/`
+      );
 
-    ws.onerror = (error) => {
-      console.error("Settings WebSocket error:", error);
-      ws.close();
-    };
 
-    ws.onclose = () => {
-      console.warn("Settings WebSocket closed. Reconnecting in 5 seconds...");
-      setTimeout(connectSettingsSocket, 5000);
-    };
+    ws.onopen =
+      () => {
+
+        console.log(
+          "Settings WebSocket connected"
+        );
+
+      };
+
+
+    ws.onmessage =
+      (e) => {
+
+        try {
+
+          const msg =
+            JSON.parse(
+              e.data
+            );
+
+
+          if (
+            msg.type ===
+            'time_pref'
+          ) {
+
+            window.USE_24H =
+              !!msg.use_24h;
+
+
+            if (
+              typeof updateClock ===
+              'function'
+            ) {
+
+              updateClock();
+
+            }
+
+
+            reformatAllEventTimes();
+
+          }
+
+        } catch (_) {}
+
+      };
+
+
+    ws.onerror =
+      (error) => {
+
+        console.error(
+          "Settings WebSocket error:",
+          error
+        );
+
+
+        ws.close();
+
+      };
+
+
+    ws.onclose =
+      () => {
+
+        console.warn(
+          "Settings WebSocket closed. Reconnecting in 5 seconds..."
+        );
+
+
+        setTimeout(
+          connectSettingsSocket,
+          5000
+        );
+
+      };
+
   }
+
 
   function startMirrorWebsockets() {
+
     connectMessageSocket();
+
     connectCalendarSocket();
+
     connectStocksSocket();
+
     connectSettingsSocket();
+
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    startMirrorWebsockets();
 
-    loadTimePrefForMirror().then(() => {
-      updateClock();
-      setInterval(updateClock, 1000);
-    });
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    fetchMessage();
-    fetchCalendarEvents();
-    fetchWeather();
-    fetchNasaApod();
+      startMirrorWebsockets();
 
-    setInterval(() => {
+
+      loadTimePrefForMirror()
+        .then(
+          () => {
+
+            updateClock();
+
+            setInterval(
+              updateClock,
+              1000
+            );
+
+          }
+        );
+
+
       fetchMessage();
-      fetchCalendarEvents();
-      fetchWeather();
-    }, 5 * 60 * 1000);
 
-    setInterval(fetchNasaApod, 6 * 60 * 60 * 1000);
-  });
+      fetchCalendarEvents();
+
+      fetchWeather();
+
+      fetchNasaApod();
+
+
+      setInterval(
+        () => {
+
+          fetchMessage();
+
+          fetchCalendarEvents();
+
+          fetchWeather();
+
+        },
+        5 * 60 * 1000
+      );
+
+
+      setInterval(
+        fetchNasaApod,
+        6 * 60 * 60 * 1000
+      );
+
+    }
+  );
+
 </script>
 
+
 {% else %}
-<div id="waiting-screen" style="text-align:center; margin-top: 20vh;">
-  <h1>Please log in on your phone to activate the mirror.</h1>
-  <p>Visit <strong>https://rr-smartmirror.onrender.com</strong> to log in.</p>
+
+<div
+  id="waiting-screen"
+  style="text-align:center; margin-top: 20vh;"
+>
+
+  <h1>
+    Please log in on your phone to activate the mirror.
+  </h1>
+
+  <p>
+    Visit
+    <strong>
+      https://rr-smartmirror.onrender.com
+    </strong>
+    to log in.
+  </p>
+
 </div>
+
 {% endif %}
 
+
 <!-- ===== CLOCK + WEATHER + CALENDAR FETCH ===== -->
+
 <script>
+
   async function loadTimePrefForMirror() {
+
     try {
-      const r = await fetch('/auth/settings/time-format/', { credentials:'include', cache:'no-store' });
-      const j = await r.json();
-      window.USE_24H = !!j.use_24h;
-    } catch(e) { window.USE_24H = false; }
+
+      const r =
+        await fetch(
+          '/auth/settings/time-format/',
+          {
+            credentials:'include',
+            cache:'no-store'
+          }
+        );
+
+
+      const j =
+        await r.json();
+
+
+      window.USE_24H =
+        !!j.use_24h;
+
+    }
+
+    catch(e) {
+
+      window.USE_24H =
+        false;
+
+    }
+
   }
+
 
   function updateClock() {
-    const el = document.getElementById("digitalClock");
-    const now = new Date();
-    const mm = String(now.getMinutes()).padStart(2,'0');
-    if (window.USE_24H) {
-      const hh = String(now.getHours()).padStart(2,'0');
-      el.textContent = `${hh}:${mm}`;
-    } else {
-      let h = now.getHours();
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      el.textContent = `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
+
+    const el =
+      document.getElementById(
+        "digitalClock"
+      );
+
+
+    const now =
+      new Date();
+
+
+    const mm =
+      String(
+        now.getMinutes()
+      ).padStart(
+        2,
+        '0'
+      );
+
+
+    if (
+      window.USE_24H
+    ) {
+
+      const hh =
+        String(
+          now.getHours()
+        ).padStart(
+          2,
+          '0'
+        );
+
+
+      el.textContent =
+        `${hh}:${mm}`;
+
     }
+
+    else {
+
+      let h =
+        now.getHours();
+
+
+      const ampm =
+        h >= 12
+          ? 'PM'
+          : 'AM';
+
+
+      h =
+        h % 12 || 12;
+
+
+      el.textContent =
+        `${String(h).padStart(2,'0')}:${mm} ${ampm}`;
+
+    }
+
   }
+
 
   function fetchCalendarEvents() {
-    fetch('/Calendar/upcoming_events/')
-      .then(r => r.json())
-      .then(j => displayCalendarEvents(j.Week))
-      .catch(err => console.error('Error fetching calendar events:', err));
+
+    fetch(
+      '/Calendar/upcoming_events/'
+    )
+      .then(
+        r =>
+          r.json()
+      )
+
+      .then(
+        j =>
+          displayCalendarEvents(
+            j.Week
+          )
+      )
+
+      .catch(
+        err =>
+          console.error(
+            'Error fetching calendar events:',
+            err
+          )
+      );
+
   }
 
-  // Fixed week (Mon→Sun of the current week). Filter events to this week only.
-  function displayCalendarEvents(events) {
-    const calendarDiv = document.getElementById('calendarEvents');
-    const monthEl = document.getElementById('calendarMonth');
-    calendarDiv.innerHTML = '';
 
-    const BASE = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  function displayCalendarEvents(
+    events
+  ) {
 
-    const weekStart = getWeekStart();                 // Monday of this week
-    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+7);
+    const calendarDiv =
+      document.getElementById(
+        'calendarEvents'
+      );
 
-    // Month label under the title (use today's month/year)
-    const today = new Date();
-    monthEl.textContent = today.toLocaleDateString('en-US', { month:'long', year:'numeric' });
 
-    const todayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+    const monthEl =
+      document.getElementById(
+        'calendarMonth'
+      );
 
-    BASE.forEach((day, i) => {
-      const d = new Date(weekStart); d.setDate(weekStart.getDate()+i);
-      const section = document.createElement('div');
-      section.className = 'day-section' + (day === todayName ? ' today' : '');
 
-      section.innerHTML = `
-        <div class="day-header">
-          <h3>${day}</h3>
-          <span class="date-pill">${d.getDate()}</span>
-        </div>
-        <ul id="list-${day}"></ul>
-      `;
-      calendarDiv.appendChild(section);
+    calendarDiv.innerHTML =
+      '';
 
-      const ul = section.querySelector('ul');
-      const raw = events[day] || [];
 
-      // Keep only events whose event_date matches this day's date (YYYY-MM-DD)
-      const wantYMD = ymd(d);
-      const filtered = raw.filter(ev => typeof ev === 'object' && ev.event_date === wantYMD);
+    const BASE = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday'
+    ];
 
-      if (!filtered.length) {
-        const li = document.createElement('li');
-        li.textContent = 'No events scheduled';
-        li.setAttribute('data-placeholder', 'true');
-        ul.appendChild(li);
-      } else {
-        filtered.forEach(ev => {
-          const li = document.createElement('li');
-          const isAllDay = ev.event_time === 'All day';
-          const timeHTML = isAllDay
-            ? `<span data-time-raw="All day">All day</span>`
-            : (ev.event_time ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>` : '');
-          li.innerHTML = `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
-          ul.appendChild(li);
-        });
+
+    const weekStart =
+      getWeekStart();
+
+
+    const weekEnd =
+      new Date(
+        weekStart
+      );
+
+
+    weekEnd.setDate(
+      weekStart.getDate() + 7
+    );
+
+
+    const today =
+      new Date();
+
+
+    monthEl.textContent =
+      today.toLocaleDateString(
+        'en-US',
+        {
+          month:'long',
+          year:'numeric'
+        }
+      );
+
+
+    const todayName =
+      today.toLocaleDateString(
+        'en-US',
+        {
+          weekday:'long'
+        }
+      );
+
+
+    BASE.forEach(
+      (day, i) => {
+
+        const d =
+          new Date(
+            weekStart
+          );
+
+
+        d.setDate(
+          weekStart.getDate() + i
+        );
+
+
+        const section =
+          document.createElement(
+            'div'
+          );
+
+
+        section.className =
+          'day-section' +
+          (
+            day === todayName
+              ? ' today'
+              : ''
+          );
+
+
+        section.innerHTML = `
+
+          <div class="day-header">
+
+            <h3>
+              ${day}
+            </h3>
+
+            <span class="date-pill">
+              ${d.getDate()}
+            </span>
+
+          </div>
+
+          <ul id="list-${day}"></ul>
+
+        `;
+
+
+        calendarDiv.appendChild(
+          section
+        );
+
+
+        const ul =
+          section.querySelector(
+            'ul'
+          );
+
+
+        const raw =
+          events[day] || [];
+
+
+        const wantYMD =
+          ymd(d);
+
+
+        const filtered =
+          raw.filter(
+            ev =>
+              typeof ev ===
+                'object' &&
+              ev.event_date ===
+                wantYMD
+          );
+
+
+        if (
+          !filtered.length
+        ) {
+
+          const li =
+            document.createElement(
+              'li'
+            );
+
+
+          li.textContent =
+            'No events scheduled';
+
+
+          li.setAttribute(
+            'data-placeholder',
+            'true'
+          );
+
+
+          ul.appendChild(
+            li
+          );
+
+        }
+
+        else {
+
+          filtered.forEach(
+            ev => {
+
+              const li =
+                document.createElement(
+                  'li'
+                );
+
+
+              const isAllDay =
+                ev.event_time ===
+                'All day';
+
+
+              const timeHTML =
+                isAllDay
+
+                  ? `<span data-time-raw="All day">All day</span>`
+
+                  : (
+                      ev.event_time
+                        ? `<span data-time-raw="${ev.event_time}">${formatTimeString(ev.event_time)}</span>`
+                        : ''
+                    );
+
+
+              li.innerHTML =
+                `<strong>${ev.event_name}</strong> - ${timeHTML}<br>${ev.event_description || ''}`;
+
+
+              ul.appendChild(
+                li
+              );
+
+            }
+          );
+
+        }
+
       }
-    });
+    );
+
   }
+
 
   function fetchWeather() {
-    fetch('/Weather/user_weather/')
-      .then(r => r.json())
-      .then(displayWeather)
-      .catch(err => console.error('Error fetching weather data:', err));
+
+    fetch(
+      '/Weather/user_weather/'
+    )
+      .then(
+        r =>
+          r.json()
+      )
+
+      .then(
+        displayWeather
+      )
+
+      .catch(
+        err =>
+          console.error(
+            'Error fetching weather data:',
+            err
+          )
+      );
+
   }
 
-  function displayWeather(data) {
-    const wrap = document.getElementById('weatherData');
-    if (data.error) { wrap.innerHTML = `<p>${data.error}</p>`; return; }
 
-    const loc      = data.location || '';
-    const temp     = data.temperature;
-    const unit     = (data.unit || 'F')[0];
-    const cond     = data.forcast || data.forecast || '';   // tolerate either key
-    const hum      = data.humidity !== "Hidden" ? data.humidity : null;
-    const ss       = data.sunrise_sunset !== "Hidden" ? data.sunrise_sunset : null;
+  function displayWeather(
+    data
+  ) {
 
-    const sunrise  = ss ? new Date(ss.sunrise * 1000).toLocaleTimeString() : null;
-    const sunset   = ss ? new Date(ss.sunset * 1000).toLocaleTimeString() : null;
+    const wrap =
+      document.getElementById(
+        'weatherData'
+      );
+
+
+    if (
+      data.error
+    ) {
+
+      wrap.innerHTML =
+        `<p>${data.error}</p>`;
+
+      return;
+
+    }
+
+
+    const loc =
+      data.location || '';
+
+
+    const temp =
+      data.temperature;
+
+
+    const unit =
+      (
+        data.unit ||
+        'F'
+      )[0];
+
+
+    const cond =
+      data.forcast ||
+      data.forecast ||
+      '';
+
+
+    const hum =
+      data.humidity !==
+        "Hidden"
+          ? data.humidity
+          : null;
+
+
+    const ss =
+      data.sunrise_sunset !==
+        "Hidden"
+          ? data.sunrise_sunset
+          : null;
+
+
+    const sunrise =
+      ss
+        ? new Date(
+            ss.sunrise * 1000
+          ).toLocaleTimeString()
+        : null;
+
+
+    const sunset =
+      ss
+        ? new Date(
+            ss.sunset * 1000
+          ).toLocaleTimeString()
+        : null;
+
 
     wrap.innerHTML = `
+
       <div class="wx-row">
-        <div class="wx-temp">${temp}<span class="wx-unit">°${unit}</span></div>
+
+        <div class="wx-temp">
+
+          ${temp}
+
+          <span class="wx-unit">
+            °${unit}
+          </span>
+
+        </div>
+
       </div>
-      <div class="wx-cond">${cond ? cond.charAt(0).toUpperCase() + cond.slice(1) : ''}</div>
+
+
+      <div class="wx-cond">
+
+        ${
+          cond
+            ? (
+                cond.charAt(0).toUpperCase() +
+                cond.slice(1)
+              )
+            : ''
+        }
+
+      </div>
+
+
       <div class="wx-meta">
-        ${loc ? `<div class="pair"><span class="label">Location</span><span class="wx-loc">${loc}</span></div>` : ''}
-        ${sunrise ? `<div class="pair"><span class="label">Sunrise</span><span>${sunrise}</span></div>` : ''}
-        ${sunset ? `<div class="pair"><span class="label">Sunset</span><span>${sunset}</span></div>` : ''}
-        ${hum !== null ? `<div class="pair"><span class="label">Humidity</span><span>${hum}%</span></div>` : ''}
+
+        ${
+          loc
+
+            ? `
+              <div class="pair">
+                <span class="label">
+                  Location
+                </span>
+
+                <span class="wx-loc">
+                  ${loc}
+                </span>
+              </div>
+            `
+
+            : ''
+        }
+
+
+        ${
+          sunrise
+
+            ? `
+              <div class="pair">
+                <span class="label">
+                  Sunrise
+                </span>
+
+                <span>
+                  ${sunrise}
+                </span>
+              </div>
+            `
+
+            : ''
+        }
+
+
+        ${
+          sunset
+
+            ? `
+              <div class="pair">
+                <span class="label">
+                  Sunset
+                </span>
+
+                <span>
+                  ${sunset}
+                </span>
+              </div>
+            `
+
+            : ''
+        }
+
+
+        ${
+          hum !== null
+
+            ? `
+              <div class="pair">
+                <span class="label">
+                  Humidity
+                </span>
+
+                <span>
+                  ${hum}%
+                </span>
+              </div>
+            `
+
+            : ''
+        }
+
       </div>
+
     `;
+
   }
+
 
   function fetchNasaApod() {
-    fetch('/NASA/apod/', { credentials: 'include', cache: 'no-store' })
-      .then(r => r.json())
-      .then(displayNasaApod)
-      .catch(err => console.error('Error fetching NASA APOD:', err));
+
+    fetch(
+      '/NASA/apod/',
+      {
+        credentials:
+          'include',
+        cache:
+          'no-store'
+      }
+    )
+
+      .then(
+        r =>
+          r.json()
+      )
+
+      .then(
+        displayNasaApod
+      )
+
+      .catch(
+        err =>
+          console.error(
+            'Error fetching NASA APOD:',
+            err
+          )
+      );
+
   }
 
-  function displayNasaApod(data) {
-    const img = document.getElementById('nasa-apod-img');
-    const title = document.getElementById('nasa-apod-title');
 
-    if (!img || !title) return;
+  function displayNasaApod(
+    data
+  ) {
 
-    if (data.error) {
-      title.textContent = data.error;
-      img.style.display = 'none';
+    const img =
+      document.getElementById(
+        'nasa-apod-img'
+      );
+
+
+    const title =
+      document.getElementById(
+        'nasa-apod-title'
+      );
+
+
+    if (
+      !img ||
+      !title
+    ) {
       return;
     }
 
-    img.src = data.image_url;
-    img.style.display = 'block';
-    title.textContent = data.title || '';
+
+    if (
+      data.error
+    ) {
+
+      title.textContent =
+        data.error;
+
+
+      img.style.display =
+        'none';
+
+
+      return;
+
+    }
+
+
+    img.src =
+      data.image_url;
+
+
+    img.style.display =
+      'block';
+
+
+    title.textContent =
+      data.title || '';
+
   }
+
 </script>
+
 
 <!-- ===== Spotify Now Playing (mirror) ===== -->
-{% if user.is_authenticated %}
-<script>
-  function renderSpotify(state){
-    const t = (state && state.track) || {};
-    const img = document.getElementById('sp-img');
-    const title = document.getElementById('sp-title');
-    const artist = document.getElementById('sp-artist');
 
-    title.textContent = t.name || '—';
-    artist.textContent = (t.artists || []).join(', ') || '';
-    if (t.image){ img.src = t.image; img.style.display='block'; } else { img.style.display='none'; }
+{% if user.is_authenticated %}
+
+<script>
+
+  function renderSpotify(
+    state
+  ) {
+
+    const t =
+      (
+        state &&
+        state.track
+      ) || {};
+
+
+    const img =
+      document.getElementById(
+        'sp-img'
+      );
+
+
+    const title =
+      document.getElementById(
+        'sp-title'
+      );
+
+
+    const artist =
+      document.getElementById(
+        'sp-artist'
+      );
+
+
+    title.textContent =
+      t.name || '—';
+
+
+    artist.textContent =
+      (
+        t.artists || []
+      ).join(', ') || '';
+
+
+    if (
+      t.image
+    ) {
+
+      img.src =
+        t.image;
+
+
+      img.style.display =
+        'block';
+
+    }
+
+    else {
+
+      img.style.display =
+        'none';
+
+    }
+
   }
+
 
   function fetchSpotifyState() {
-    fetch('/spotify/state/', { credentials:'include', cache:'no-store' })
-      .then(r => r.ok ? r.json() : null)
-      .then(j => { if (j) renderSpotify(j); })
-      .catch(() => {});
+
+    fetch(
+      '/spotify/state/',
+      {
+        credentials:'include',
+        cache:'no-store'
+      }
+    )
+
+      .then(
+        r =>
+          r.ok
+            ? r.json()
+            : null
+      )
+
+      .then(
+        j => {
+
+          if (j) {
+            renderSpotify(j);
+          }
+
+        }
+      )
+
+      .catch(
+        () => {}
+      );
+
   }
+
 
   function connectSpotifySocket() {
-    const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-    const ws = new WebSocket(`${scheme}://${location.host}/ws/spotify/`);
 
-    ws.onopen = () => {
-      console.log("Spotify WebSocket connected");
-    };
+    const scheme =
+      (
+        location.protocol ===
+        'https:'
+      )
+        ? 'wss'
+        : 'ws';
 
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'spotify_state') renderSpotify(msg.data);
-      } catch (_) {}
-    };
 
-    ws.onerror = (error) => {
-      console.error("Spotify WebSocket error:", error);
-      ws.close();
-    };
+    const ws =
+      new WebSocket(
+        `${scheme}://${location.host}/ws/spotify/`
+      );
 
-    ws.onclose = () => {
-      console.warn("Spotify WebSocket closed. Reconnecting in 5 seconds...");
-      setTimeout(connectSpotifySocket, 5000);
-    };
+
+    ws.onopen =
+      () => {
+
+        console.log(
+          "Spotify WebSocket connected"
+        );
+
+      };
+
+
+    ws.onmessage =
+      (e) => {
+
+        try {
+
+          const msg =
+            JSON.parse(
+              e.data
+            );
+
+
+          if (
+            msg.type ===
+            'spotify_state'
+          ) {
+
+            renderSpotify(
+              msg.data
+            );
+
+          }
+
+        }
+
+        catch (_) {}
+
+      };
+
+
+    ws.onerror =
+      (error) => {
+
+        console.error(
+          "Spotify WebSocket error:",
+          error
+        );
+
+
+        ws.close();
+
+      };
+
+
+    ws.onclose =
+      () => {
+
+        console.warn(
+          "Spotify WebSocket closed. Reconnecting in 5 seconds..."
+        );
+
+
+        setTimeout(
+          connectSpotifySocket,
+          5000
+        );
+
+      };
+
   }
 
+
   connectSpotifySocket();
+
+
   fetchSpotifyState();
 
-  setInterval(() => {
-    fetchSpotifyState();
-  }, 5 * 60 * 1000);
+
+  setInterval(
+    () => {
+
+      fetchSpotifyState();
+
+    },
+    5 * 60 * 1000
+  );
+
 </script>
+
 {% endif %}
 
 </body>
 </html>
+
 <!-- lets see if this commits-->
