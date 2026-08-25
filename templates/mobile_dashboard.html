@@ -263,6 +263,66 @@
       style="display:block;margin-top:10px"
     ></small>
   </div>
+  <div class="card">
+    <h3 style="margin:0 0 12px">Stock Alerts</h3>
+  
+    <input
+      id="stockAlertSymbol"
+      type="text"
+      maxlength="10"
+      placeholder="Ticker symbol (e.g. AAPL)"
+      autocomplete="off"
+    >
+  
+    <input
+      id="stockAlertPrice"
+      type="number"
+      min="0.01"
+      step="0.01"
+      placeholder="Target price"
+    >
+  
+    <select
+      id="stockAlertDirection"
+      style="
+        width:100%;
+        box-sizing:border-box;
+        background:#0f0e0c;
+        border:1px solid rgba(255,255,255,.12);
+        border-radius:10px;
+        padding:12px;
+        margin:6px 0 12px;
+      "
+    >
+      <option value="above">Above target price</option>
+      <option value="below">Below target price</option>
+    </select>
+  
+    <button
+      id="createStockAlertBtn"
+      class="primary"
+      type="button"
+    >
+      Create Alert
+    </button>
+  
+    <small
+      id="stockAlertStatus"
+      class="muted"
+      style="display:block;margin-top:10px"
+    ></small>
+  </div>
+  
+  
+  <div class="card">
+    <h3 style="margin:0 0 12px">Your Alerts</h3>
+  
+    <div id="stockAlertsList">
+      <small class="muted">
+        Loading alerts...
+      </small>
+    </div>
+  </div>
 </section>
 
   <!-- ================== SPOTIFY PAGE ================== -->
@@ -897,6 +957,366 @@
         }
       );
     });
+})();
+
+// ---------- STOCK ALERTS ----------
+
+(function wireStockAlerts() {
+
+  const symbolInput =
+    document.getElementById("stockAlertSymbol");
+
+  const priceInput =
+    document.getElementById("stockAlertPrice");
+
+  const directionSelect =
+    document.getElementById("stockAlertDirection");
+
+  const createBtn =
+    document.getElementById("createStockAlertBtn");
+
+  const statusEl =
+    document.getElementById("stockAlertStatus");
+
+  const alertsList =
+    document.getElementById("stockAlertsList");
+
+  if (
+    !symbolInput ||
+    !priceInput ||
+    !directionSelect ||
+    !createBtn ||
+    !statusEl ||
+    !alertsList
+  ) {
+    return;
+  }
+
+
+  function setAlertStatus(message) {
+    statusEl.textContent = message || "";
+  }
+
+
+  async function loadStockAlerts() {
+
+    alertsList.innerHTML = `
+      <small class="muted">
+        Loading alerts...
+      </small>
+    `;
+
+    try {
+
+      const response = await fetch(
+        "/Stocks/alerts/",
+        {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store"
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alertsList.innerHTML = `
+          <small class="muted">
+            Unable to load alerts.
+          </small>
+        `;
+        return;
+      }
+
+      const alerts = data.alerts || [];
+
+      if (!alerts.length) {
+        alertsList.innerHTML = `
+          <small class="muted">
+            No stock alerts set.
+          </small>
+        `;
+        return;
+      }
+
+      alertsList.innerHTML = alerts
+        .map(alert => {
+
+          const directionLabel =
+            alert.direction === "above"
+              ? "Above"
+              : "Below";
+
+          const stateLabel =
+            alert.triggered
+              ? "Triggered"
+              : "Active";
+
+          return `
+            <div
+              style="
+                padding:10px 0;
+                border-bottom:
+                  1px solid rgba(255,255,255,.06);
+              "
+            >
+              <div style="font-weight:600">
+                ${alert.symbol}
+                ${directionLabel}
+                $${Number(alert.target_price).toFixed(2)}
+              </div>
+
+              <small class="muted">
+                ${stateLabel}
+              </small>
+
+              <div style="margin-top:8px">
+                <button
+                  class="primary remove-stock-alert"
+                  type="button"
+                  data-alert-id="${alert.alert_id}"
+                >
+                  Remove Alert
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+    } catch (error) {
+
+      console.error(
+        "Load stock alerts error:",
+        error
+      );
+
+      alertsList.innerHTML = `
+        <small class="muted">
+          Unable to load alerts.
+        </small>
+      `;
+    }
+  }
+
+
+  async function createStockAlert() {
+
+    const symbol =
+      (symbolInput.value || "")
+        .trim()
+        .toUpperCase();
+
+    const targetPrice =
+      parseFloat(priceInput.value);
+
+    const direction =
+      directionSelect.value;
+
+    if (!symbol) {
+      setAlertStatus(
+        "Enter a ticker symbol."
+      );
+      return;
+    }
+
+    if (
+      Number.isNaN(targetPrice) ||
+      targetPrice <= 0
+    ) {
+      setAlertStatus(
+        "Enter a valid target price."
+      );
+      return;
+    }
+
+    setAlertStatus("Creating alert...");
+
+    try {
+
+      const response = await fetch(
+        "/Stocks/create_alert/",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "X-CSRFToken":
+              getCookie("csrftoken")
+          },
+
+          credentials: "include",
+          cache: "no-store",
+
+          body: JSON.stringify({
+            symbol: symbol,
+            target_price: targetPrice,
+            direction: direction
+          })
+        }
+      );
+
+      const data =
+        await response
+          .json()
+          .catch(() => ({}));
+
+      if (
+        !response.ok ||
+        data.success === false
+      ) {
+        setAlertStatus(
+          data.error ||
+          "Unable to create alert."
+        );
+        return;
+      }
+
+      symbolInput.value = "";
+      priceInput.value = "";
+
+      setAlertStatus(
+        `${data.symbol} alert created`
+      );
+
+      await loadStockAlerts();
+
+      setTimeout(
+        () => setAlertStatus(""),
+        1800
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Create stock alert error:",
+        error
+      );
+
+      setAlertStatus(
+        "Network error"
+      );
+    }
+  }
+
+
+  async function removeStockAlert(alertId) {
+
+    try {
+
+      const response = await fetch(
+        "/Stocks/remove_alert/",
+        {
+          method: "DELETE",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "X-CSRFToken":
+              getCookie("csrftoken")
+          },
+
+          credentials: "include",
+          cache: "no-store",
+
+          body: JSON.stringify({
+            alert_id: alertId
+          })
+        }
+      );
+
+      const data =
+        await response
+          .json()
+          .catch(() => ({}));
+
+      if (
+        !response.ok ||
+        data.success === false
+      ) {
+        setAlertStatus(
+          data.error ||
+          "Unable to remove alert."
+        );
+        return;
+      }
+
+      setAlertStatus(
+        "Alert removed"
+      );
+
+      await loadStockAlerts();
+
+      setTimeout(
+        () => setAlertStatus(""),
+        1800
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Remove stock alert error:",
+        error
+      );
+
+      setAlertStatus(
+        "Network error"
+      );
+    }
+  }
+
+
+  createBtn.addEventListener(
+    "click",
+    createStockAlert
+  );
+
+
+  alertsList.addEventListener(
+    "click",
+    event => {
+
+      const button =
+        event.target.closest(
+          ".remove-stock-alert"
+        );
+
+      if (!button) {
+        return;
+      }
+
+      const alertId =
+        Number(
+          button.dataset.alertId
+        );
+
+      if (!Number.isInteger(alertId)) {
+        return;
+      }
+
+      removeStockAlert(alertId);
+    }
+  );
+
+
+  document
+    .querySelectorAll(
+      '[data-goto="page-stocks"]'
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+          loadStockAlerts();
+        }
+      );
+
+    });
+
 })();
 
   // ---------- LED CONTROLS ----------
