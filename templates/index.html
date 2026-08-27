@@ -628,14 +628,66 @@
       );
 
 
-    stocksSocket.onopen =
-      () => {
-
+      stocksSocket.onopen = () => {
         console.log(
           "Stocks WebSocket connected"
         );
-
+      
+        loadInitialStockPrices();
       };
+
+      async function loadInitialStockPrices() {
+        try {
+          const response = await fetch(
+            "/Stocks/user_stocks/",
+            {
+              credentials: "include",
+              cache: "no-store"
+            }
+          );
+      
+          if (!response.ok) {
+            console.error(
+              "Unable to load initial stock prices:",
+              response.status
+            );
+            return;
+          }
+      
+          const data = await response.json();
+      
+          const stockData =
+            data.stocks || {};
+      
+          Object.entries(stockData)
+            .forEach(([symbol, info]) => {
+      
+              if (
+                info.error ||
+                info.current_price == null
+              ) {
+                return;
+              }
+      
+              const price =
+                Number(info.current_price);
+      
+              stocks[symbol] = {
+                price: price,
+                previousPrice: price
+              };
+      
+              ensureStockDisplay(symbol);
+              updateStockDisplay(symbol);
+            });
+      
+        } catch (error) {
+          console.error(
+            "Initial stock price load failed:",
+            error
+          );
+        }
+      }
 
 
     stocksSocket.onmessage =

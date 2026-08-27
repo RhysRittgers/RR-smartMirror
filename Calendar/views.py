@@ -78,7 +78,7 @@ def add_event(request):
             {"type": "calendar_event", "event": event.as_dict()}
         )
 
-    # 🔥 IMPORTANT: return the event so the remote can push it via WebSocket
+    # IMPORTANT: return the event so the remote can push it via WebSocket
     return JsonResponse({
         "status": "Event saved and broadcasted!",
         "event": event.as_dict()
