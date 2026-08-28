@@ -621,6 +621,7 @@
     let activeSymbols =
       new Set();
 
+    const triggeredAlerts = {};
 
     const stocksSocket =
       new WebSocket(
@@ -824,63 +825,18 @@
           }
 
 
-          const stockDiv =
-            ensureStockDisplay(
-              symbol
-            );
+          triggeredAlerts[symbol] =
+            triggeredAlerts[symbol] || [];
 
+          triggeredAlerts[symbol].push({
+            alertId: data.alert_id,
+            direction: direction,
+            targetPrice: targetPrice
+          });
 
-          const alertDiv =
-            document.getElementById(
-              `alert-${symbol}`
-            );
-
-
-          // Remove any previous alert styling
-          // before applying the new alert.
-          stockDiv.classList.remove(
-            "stock-alert-above",
-            "stock-alert-below"
+          renderStockAlert(
+            symbol
           );
-
-
-          if (
-            direction ===
-            "above"
-          ) {
-
-            stockDiv.classList.add(
-              "stock-alert-above"
-            );
-
-
-            if (alertDiv) {
-
-              alertDiv.textContent =
-                `Alert: Above $${targetPrice.toFixed(2)} triggered`;
-
-            }
-
-          }
-
-          else if (
-            direction ===
-            "below"
-          ) {
-
-            stockDiv.classList.add(
-              "stock-alert-below"
-            );
-
-
-            if (alertDiv) {
-
-              alertDiv.textContent =
-                `Alert: Below $${targetPrice.toFixed(2)} triggered`;
-
-            }
-
-          }
 
 
           // Immediately display the actual
@@ -909,6 +865,42 @@
             `Stock alert triggered: ${symbol} ${direction} $${targetPrice}`
           );
 
+
+          return;
+        }
+
+
+        // =====================================================
+        // STOCK ALERT REMOVED
+        // =====================================================
+
+        if (
+          data.type ===
+          "stock_alert_removed"
+        ) {
+
+          const symbol =
+            data.symbol;
+
+          const alertId =
+            data.alert_id;
+
+          const alerts =
+            triggeredAlerts[symbol] || [];
+
+          triggeredAlerts[symbol] =
+            alerts.filter(
+              alert =>
+                alert.alertId !== alertId
+            );
+
+          renderStockAlert(
+            symbol
+          );
+
+          console.log(
+            `Stock alert removed: ${symbol} alert ${alertId}`
+          );
 
           return;
         }
@@ -999,6 +991,75 @@
         );
 
       };
+
+
+    function renderStockAlert(
+      symbol
+    ) {
+
+      const stockDiv =
+        ensureStockDisplay(
+          symbol
+        );
+
+      const alertDiv =
+        document.getElementById(
+          `alert-${symbol}`
+        );
+
+      stockDiv.classList.remove(
+        "stock-alert-above",
+        "stock-alert-below"
+      );
+
+      if (alertDiv) {
+        alertDiv.textContent = "";
+      }
+
+      const alerts =
+        triggeredAlerts[symbol] || [];
+
+      if (alerts.length === 0) {
+        return;
+      }
+
+      // Newest triggered alert controls the mirror visual.
+      const alert =
+        alerts[alerts.length - 1];
+
+      if (
+        alert.direction ===
+        "above"
+      ) {
+
+        stockDiv.classList.add(
+          "stock-alert-above"
+        );
+
+        if (alertDiv) {
+          alertDiv.textContent =
+            `Alert: Above $${alert.targetPrice.toFixed(2)} triggered`;
+        }
+
+      }
+
+      else if (
+        alert.direction ===
+        "below"
+      ) {
+
+        stockDiv.classList.add(
+          "stock-alert-below"
+        );
+
+        if (alertDiv) {
+          alertDiv.textContent =
+            `Alert: Below $${alert.targetPrice.toFixed(2)} triggered`;
+        }
+
+      }
+
+    }
 
 
     function ensureStockDisplay(

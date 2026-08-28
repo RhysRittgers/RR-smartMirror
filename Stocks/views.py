@@ -7,7 +7,7 @@ from .services import add_user_symbol, get_user_symbols, remove_stock_symbol, cr
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.views.decorators.csrf import csrf_exempt
-from .events import publish_alert_subscriptions_changed
+from .events import publish_alert_subscriptions_changed, publish_stock_alert_removed
 
 def broadcast_stock_preference_change(user):
     channel_layer = get_channel_layer()
@@ -284,6 +284,7 @@ def remove_alert(request):
     if not result.get("success"):
         return JsonResponse(result, status=400)
     
+    publish_stock_alert_removed(result)
     publish_alert_subscriptions_changed()
     
     return JsonResponse(result)

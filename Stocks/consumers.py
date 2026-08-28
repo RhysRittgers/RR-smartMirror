@@ -128,3 +128,12 @@ class StocksConsumer(AsyncWebsocketConsumer):
                 "direction": event["direction"],
             })
         )
+    
+    async def stock_alert_removed(self, event):
+        
+        await self.send(text_data=json.dumps({
+            "type": "stock_alert_removed",
+            "event_type": event["event_type"],
+            "alert_id": event["alert_id"],
+            "symbol": event["symbol"],
+        }))

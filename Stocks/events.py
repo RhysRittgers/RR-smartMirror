@@ -44,3 +44,21 @@ def publish_stock_price_update(symbol, current_price):
             "current_price": current_price,
         }
     )
+    
+def publish_stock_alert_removed(result):
+    channel_layer = get_channel_layer()
+
+    user_id = result["user_id"]
+
+    event = {
+        "type": "stock_alert_removed",
+        "event_type": "stock.alert.removed",
+        "alert_id": result["alert_id"],
+        "user_id": user_id,
+        "symbol": result["symbol"],
+    }
+
+    async_to_sync(channel_layer.group_send)(
+        f"stocks_user_{user_id}",
+        event
+    )

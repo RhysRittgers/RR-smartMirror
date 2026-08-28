@@ -174,12 +174,15 @@ def remove_stock_alert(user, alert_id):
             "success": False,
             "error": f"{alert_id} not found"
         }
-        
+    
+    symbol = alert.symbol    
     alert.delete()
     
     return {
         "success": True,
-        "alert_id": alert_id
+        "alert_id": alert_id,
+        "symbol": symbol,
+        "user_id": user.id
     }
     
 def get_active_alerts(symbol):
