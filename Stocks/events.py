@@ -62,3 +62,24 @@ def publish_stock_alert_removed(result):
         f"stocks_user_{user_id}",
         event
     )
+    
+    
+def publish_stock_alert_created(result):
+    channel_layer = get_channel_layer()
+
+    user_id = result["user_id"]
+
+    event = {
+        "type": "stock_alert_created",
+        "event_type": "stock.alert.created",
+        "alert_id": result["alert_id"],
+        "user_id": user_id,
+        "symbol": result["symbol"],
+        "target_price": result["target_price"],
+        "direction": result["direction"],
+    }
+
+    async_to_sync(channel_layer.group_send)(
+        f"stocks_user_{user_id}",
+        event
+    )

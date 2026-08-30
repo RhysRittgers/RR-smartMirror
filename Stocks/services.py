@@ -146,6 +146,7 @@ def create_stock_alert(user, symbol, target_price, direction):
     return {
         "success": True,
         "alert_id": alert.id,
+        "user_id": user.id,
         "symbol": symbol,
         "target_price": target_price,
         "direction": direction

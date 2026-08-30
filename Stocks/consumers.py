@@ -113,6 +113,19 @@ class StocksConsumer(AsyncWebsocketConsumer):
                 ]
             })
         )
+        
+    async def stock_alert_created(self, event):
+
+        await self.send(
+            text_data=json.dumps({
+                "type": "stock_alert_created",
+                "event_type": event["event_type"],
+                "alert_id": event["alert_id"],
+                "symbol": event["symbol"],
+                "target_price": event["target_price"],
+                "direction": event["direction"],
+            })
+        )
 
 
     async def stock_alert_triggered(self, event):

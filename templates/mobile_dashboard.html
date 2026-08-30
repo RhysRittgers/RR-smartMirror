@@ -1099,6 +1099,81 @@
     }
   }
 
+  // ---------- STOCK ALERT WEBSOCKET ----------
+
+  let stockAlertsSocket = null;
+  let stockAlertsReconnectTimer = null;
+
+  function connectStockAlertsSocket() {
+
+    const protocol =
+      window.location.protocol === "https:"
+        ? "wss:"
+        : "ws:";
+
+    stockAlertsSocket = new WebSocket(
+      `${protocol}//${window.location.host}/ws/Stocks/`
+    );
+
+    stockAlertsSocket.onopen = () => {
+      console.log("Stock alerts WebSocket connected");
+    };
+
+    stockAlertsSocket.onmessage = event => {
+      let data;
+
+      try {
+        data = JSON.parse(event.data);
+      } catch (error) {
+        console.error(
+          "Invalid stock WebSocket message:",
+          error
+        );
+        return;
+      }
+
+      if (
+        data.type === "stock_alert_created" ||
+        data.type === "stock_alert_removed" ||
+        data.type === "stock_alert_triggered"
+      ) {
+        console.log(
+          "Stock alert lifecycle event:",
+          data.type
+        );
+
+        loadStockAlerts();
+      }
+    };
+
+    stockAlertsSocket.onclose = () => {
+      console.log(
+        "Stock alerts WebSocket disconnected"
+      );
+
+      stockAlertsSocket = null;
+
+      clearTimeout(
+        stockAlertsReconnectTimer
+      );
+
+      stockAlertsReconnectTimer =
+        setTimeout(
+          connectStockAlertsSocket,
+          3000
+        );
+    };
+
+    stockAlertsSocket.onerror = error => {
+      console.error(
+        "Stock alerts WebSocket error:",
+        error
+      );
+    };
+  }
+
+  connectStockAlertsSocket();
+
 
   async function createStockAlert() {
 
