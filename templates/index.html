@@ -1,5 +1,7 @@
 {% load static %}
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <title>Smart Mirror - Live Dashboard</title>
@@ -17,118 +19,75 @@
     .calendar-container ul { margin:4px 0 0 0; padding-left:18px; }
     .calendar-container li { margin:2px 0; }
 
-    /* --- section title line --- */
-    .section-title{
-      display:flex; align-items:center; gap:12px;
-      margin: 0 0 8px 0; padding:0;
-    }
+/* --- section title line --- */
+.section-title{
+  display:flex; align-items:center; gap:12px;
+  margin: 0 0 8px 0; padding:0;
+}
 
-    .section-title::after{
-      content:""; flex:1; height:1px; background:linear-gradient(90deg, rgba(255,255,255,.25), rgba(255,255,255,.08));
-      transform: translateY(2px);
-    }
+.section-title::after{
+  content:""; flex:1; height:1px; background:linear-gradient(90deg, rgba(255,255,255,.25), rgba(255,255,255,.08));
+  transform: translateY(2px);
+}
 
-    /* --- Weather card polish (no logic change) --- */
-    .weather-card{ margin-top:6px; }
-    .wx-row{ display:flex; align-items:baseline; gap:10px; }
-    .wx-temp{ font-size:2.6rem; line-height:1; font-weight:700; letter-spacing:0.5px; }
-    .wx-unit{ opacity:.85; margin-left:4px; font-size:1.2rem; }
-    .wx-cond{ opacity:.9; margin:6px 0 10px 0; }
-    .wx-meta{ display:grid; grid-template-columns: 1fr; row-gap:4px; opacity:.9; }
-    .wx-meta .pair{ display:flex; align-items:center; gap:8px; }
-    .wx-meta .label{ opacity:.8; min-width:78px; }
-    .wx-loc{ font-weight:600; opacity:.95; }
+/* --- Weather card polish (no logic change) --- */
+.weather-card{ margin-top:6px; }
+.wx-row{ display:flex; align-items:baseline; gap:10px; }
+.wx-temp{ font-size:2.6rem; line-height:1; font-weight:700; letter-spacing:0.5px; }
+.wx-unit{ opacity:.85; margin-left:4px; font-size:1.2rem; }
+.wx-cond{ opacity:.9; margin:6px 0 10px 0; }
+.wx-meta{ display:grid; grid-template-columns: 1fr; row-gap:4px; opacity:.9; }
+.wx-meta .pair{ display:flex; align-items:center; gap:8px; }
+.wx-meta .label{ opacity:.8; min-width:78px; }
+.wx-loc{ font-weight:600; opacity:.95; }
 
-    /* --- Weekly forecast --- */
-    .mirror-header {
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-    }
+/* --- Spotify minor tidy (keeps your structure) --- */
+#sp-box { display:flex; align-items:center; gap:12px; margin-top:6px; }
+#sp-img { width:160px; height:160px; object-fit:cover; border-radius:10px; display:none; }
+#sp-title { margin-top:8px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
+#sp-artist { opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
 
-    .weekly-forecast {
-      display:grid;
-      grid-template-columns:repeat(7, 1fr);
-      gap:18px;
-      text-align:center;
-    }
+/* --- NASA APOD --- */
+.nasa-card { margin-top: 12px; }
+#nasa-apod-img {
+  width: 260px;
+  max-height: 170px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: none;
+}
 
-    .forecast-day {
-      min-width:42px;
-    }
+#nasa-apod-title {
+  margin-top: 6px;
+  font-size: .9rem;
+  opacity: .85;
+}
 
-    .forecast-day-name {
-      font-size:.85rem;
-      font-weight:600;
-      opacity:.8;
-      text-transform:uppercase;
-      letter-spacing:.5px;
-    }
+/* --- Triggered stock alerts --- */
+.stock.stock-alert-above .stock-price {
+  color: #4cff7a;
+  text-shadow: 0 0 10px rgba(76,255,122,.35);
+}
 
-    .forecast-icon {
-      font-size:1.7rem;
-      margin:5px 0;
-    }
+.stock.stock-alert-below .stock-price {
+  color: #ff5252;
+  text-shadow: 0 0 10px rgba(255,82,82,.35);
+}
 
-    .forecast-temperatures {
-      font-size:.9rem;
-      white-space:nowrap;
-    }
+.stock-alert-status {
+  margin-top: 4px;
+  font-size: .78rem;
+  opacity: .85;
+}
 
-    .forecast-high {
-      font-weight:600;
-    }
+.stock.stock-alert-above .stock-alert-status {
+  color: #4cff7a;
+}
 
-    .forecast-low {
-      opacity:.6;
-    }
+.stock.stock-alert-below .stock-alert-status {
+  color: #ff5252;
+}
 
-    /* --- Spotify minor tidy (keeps your structure) --- */
-    #sp-box { display:flex; align-items:center; gap:12px; margin-top:6px; }
-    #sp-img { width:160px; height:160px; object-fit:cover; border-radius:10px; display:none; }
-    #sp-title { margin-top:8px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
-    #sp-artist { opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; }
-
-    /* --- NASA APOD --- */
-    .nasa-card { margin-top: 12px; }
-    #nasa-apod-img {
-      width: 260px;
-      max-height: 170px;
-      object-fit: cover;
-      border-radius: 10px;
-      display: none;
-    }
-
-    #nasa-apod-title {
-      margin-top: 6px;
-      font-size: .9rem;
-      opacity: .85;
-    }
-
-    /* --- Triggered stock alerts --- */
-    .stock.stock-alert-above .stock-price {
-      color: #4cff7a;
-      text-shadow: 0 0 10px rgba(76,255,122,.35);
-    }
-
-    .stock.stock-alert-below .stock-price {
-      color: #ff5252;
-      text-shadow: 0 0 10px rgba(255,82,82,.35);
-    }
-
-    .stock-alert-status {
-      margin-top: 4px;
-      font-size: .78rem;
-      opacity: .85;
-    }
-
-    .stock.stock-alert-above .stock-alert-status {
-      color: #4cff7a;
-    }
-
-    .stock.stock-alert-below .stock-alert-status {
-      color: #ff5252;
-    }
   </style>
 </head>
 
@@ -136,42 +95,37 @@
 
 {% if user.is_authenticated %}
 
-<header class="mirror-header">
+<header>
   <div class="clock-container">
     <p id="digitalClock">Loading time...</p>
-  </div>
-
-  <div
-    id="weeklyForecast"
-    class="weekly-forecast"
-  >
-    <p>Loading forecast...</p>
   </div>
 </header>
 
 <div class="dashboard-container">
 
   <!-- Left Column -->
+
   <div class="left-section">
 
-    <h2 class="section-title">Upcoming Events</h2>
+<h2 class="section-title">Upcoming Events</h2>
 
-    <div id="calendarMonth" class="calendar-month"></div>
+<div id="calendarMonth" class="calendar-month"></div>
 
-    <div class="calendar-container" id="calendarEvents">
-      <p>Loading events...</p>
-    </div>
+<div class="calendar-container" id="calendarEvents">
+  <p>Loading events...</p>
+</div>
 
-    <h2 class="section-title">Live Stock Prices</h2>
+<h2 class="section-title">Live Stock Prices</h2>
 
-    <div
-      class="stock-grid"
-      id="stocksGrid"
-    ></div>
+<div
+  class="stock-grid"
+  id="stocksGrid"
+></div>
 
   </div>
 
   <!-- Center Column -->
+
   <div
     id="mirror-message"
     class="message-container"
@@ -180,62 +134,62 @@
   </div>
 
   <!-- Right Column -->
+
   <div class="right-section">
 
-    <h2 class="section-title">🌤 Weather</h2>
+<h2 class="section-title">🌤 Weather</h2>
+
+<div
+  class="weather-container weather-card"
+  id="weatherData"
+>
+  <p>Loading weather...</p>
+</div>
+
+<h2 class="section-title">Now Playing</h2>
+
+<div id="sp-box">
+
+  <img
+    id="sp-img"
+    style="border-radius:10px;display:none"
+  >
+
+  <div>
 
     <div
-      class="weather-container weather-card"
-      id="weatherData"
-    >
-      <p>Loading weather...</p>
-    </div>
-
-    <h2 class="section-title">Now Playing</h2>
-
-    <div id="sp-box">
-
-      <img
-        id="sp-img"
-        style="border-radius:10px;display:none"
-      >
-
-      <div>
-
-        <div
-          id="sp-title"
-          style="margin-top:8px;font-weight:bold;"
-        ></div>
-
-        <div
-          id="sp-artist"
-          style="opacity:0.8;"
-        ></div>
-
-      </div>
-
-    </div>
-
-    <h2 class="section-title">NASA APOD</h2>
+      id="sp-title"
+      style="margin-top:8px;font-weight:bold;"
+    ></div>
 
     <div
-      id="nasa-apod"
-      class="nasa-card"
-    >
-
-      <img
-        id="nasa-apod-img"
-        alt="NASA Astronomy Photo of the Day"
-      >
-
-      <div id="nasa-apod-title"></div>
-
-    </div>
+      id="sp-artist"
+      style="opacity:0.8;"
+    ></div>
 
   </div>
 
 </div>
 
+<h2 class="section-title">NASA APOD</h2>
+
+<div
+  id="nasa-apod"
+  class="nasa-card"
+>
+
+  <img
+    id="nasa-apod-img"
+    alt="NASA Astronomy Photo of the Day"
+  >
+
+  <div id="nasa-apod-title"></div>
+
+</div>
+
+  </div>
+
+</div>
 
 <!-- ===== Time helpers (12/24h) ===== -->
 
@@ -301,7 +255,6 @@
   }
 
 </script>
-
 
 <!-- ===== WEBSOCKETS ===== -->
 
@@ -1357,8 +1310,6 @@
 
       fetchWeather();
 
-      fetchWeeklyForecast();
-
       fetchNasaApod();
 
 
@@ -1377,12 +1328,6 @@
 
 
       setInterval(
-        fetchWeeklyForecast,
-        60 * 60 * 1000
-      );
-
-
-      setInterval(
         fetchNasaApod,
         6 * 60 * 60 * 1000
       );
@@ -1391,7 +1336,6 @@
   );
 
 </script>
-
 
 {% else %}
 
@@ -1415,7 +1359,6 @@
 </div>
 
 {% endif %}
-
 
 <!-- ===== CLOCK + WEATHER + CALENDAR FETCH ===== -->
 
@@ -1764,234 +1707,6 @@
   }
 
 
-  function getWeatherIcon(
-    code
-  ) {
-
-    if (code === 0) {
-      return "☀";
-    }
-
-    if (
-      code === 1 ||
-      code === 2
-    ) {
-      return "🌤";
-    }
-
-    if (code === 3) {
-      return "☁";
-    }
-
-    if (
-      code === 45 ||
-      code === 48
-    ) {
-      return "🌫";
-    }
-
-    if (
-      code >= 51 &&
-      code <= 57
-    ) {
-      return "🌦";
-    }
-
-    if (
-      code >= 61 &&
-      code <= 67
-    ) {
-      return "🌧";
-    }
-
-    if (
-      code >= 71 &&
-      code <= 77
-    ) {
-      return "❄";
-    }
-
-    if (
-      code >= 80 &&
-      code <= 82
-    ) {
-      return "🌧";
-    }
-
-    if (
-      code >= 85 &&
-      code <= 86
-    ) {
-      return "🌨";
-    }
-
-    if (
-      code >= 95 &&
-      code <= 99
-    ) {
-      return "⛈";
-    }
-
-    return "—";
-
-  }
-
-
-  function fetchWeeklyForecast() {
-
-    fetch(
-      '/Weather/weekly_forecast/',
-      {
-        credentials:'include',
-        cache:'no-store'
-      }
-    )
-      .then(
-        response => {
-
-          if (!response.ok) {
-
-            throw new Error(
-              `Weekly forecast request failed: ${response.status}`
-            );
-
-          }
-
-          return response.json();
-
-        }
-      )
-
-      .then(
-        displayWeeklyForecast
-      )
-
-      .catch(
-        error =>
-          console.error(
-            'Error fetching weekly forecast:',
-            error
-          )
-      );
-
-  }
-
-
-  function displayWeeklyForecast(
-    data
-  ) {
-
-    const forecastDiv =
-      document.getElementById(
-        'weeklyForecast'
-      );
-
-
-    if (!forecastDiv) {
-      return;
-    }
-
-
-    if (
-      data.error ||
-      !Array.isArray(
-        data.forecast
-      )
-    ) {
-
-      forecastDiv.innerHTML =
-        '<p>Forecast unavailable</p>';
-
-      return;
-
-    }
-
-
-    forecastDiv.innerHTML =
-      '';
-
-
-    data.forecast.forEach(
-      day => {
-
-        const date =
-          new Date(
-            `${day.date}T12:00:00`
-          );
-
-
-        const dayName =
-          date.toLocaleDateString(
-            'en-US',
-            {
-              weekday:'short'
-            }
-          );
-
-
-        const icon =
-          getWeatherIcon(
-            day.weather_code
-          );
-
-
-        const high =
-          Math.round(
-            day.temperature_max
-          );
-
-
-        const low =
-          Math.round(
-            day.temperature_min
-          );
-
-
-        const dayDiv =
-          document.createElement(
-            'div'
-          );
-
-
-        dayDiv.className =
-          'forecast-day';
-
-
-        dayDiv.innerHTML = `
-
-          <div class="forecast-day-name">
-            ${dayName}
-          </div>
-
-          <div class="forecast-icon">
-            ${icon}
-          </div>
-
-          <div class="forecast-temperatures">
-
-            <span class="forecast-high">
-              ${high}°
-            </span>
-
-            <span class="forecast-low">
-              ${low}°
-            </span>
-
-          </div>
-
-        `;
-
-
-        forecastDiv.appendChild(
-          dayDiv
-        );
-
-      }
-    );
-
-  }
-
-
   function fetchWeather() {
 
     fetch(
@@ -2292,7 +2007,6 @@
   }
 
 </script>
-
 
 <!-- ===== Spotify Now Playing (mirror) ===== -->
 
