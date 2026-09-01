@@ -82,6 +82,36 @@
   opacity:.6;
 }
 
+/* --- Weekly moon phases --- */
+.weekly-moon-phases {
+  position:absolute;
+  top:35px;
+  left:6%;
+  display:grid;
+  grid-template-columns:repeat(7, 1fr);
+  gap:18px;
+  text-align:center;
+}
+
+.moon-day {
+  min-width:42px;
+}
+
+.moon-day-name {
+  font-size:.85rem;
+  font-weight:600;
+  opacity:.55;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+.moon-icon {
+  font-size:1.65rem;
+  line-height:1;
+  margin-top:7px;
+  opacity:.78;
+}
+
 /* --- Spotify minor tidy (keeps your structure) --- */
 #sp-box { display:flex; align-items:center; gap:12px; margin-top:6px; }
 #sp-img { width:160px; height:160px; object-fit:cover; border-radius:10px; display:none; }
@@ -141,6 +171,13 @@
     <p id="digitalClock">Loading time...</p>
   </div>
 </header>
+
+<div
+  id="weeklyMoonPhases"
+  class="weekly-moon-phases"
+>
+  <p>Loading moon phases...</p>
+</div>
 
 <div
   id="weeklyForecast"
@@ -1763,6 +1800,122 @@
   }
 
 
+  function getMoonPhaseIcon(
+    phase
+  ) {
+
+    if (
+      phase < 0.0625 ||
+      phase >= 0.9375
+    ) {
+      return "🌑";
+    }
+
+    if (phase < 0.1875) {
+      return "🌒";
+    }
+
+    if (phase < 0.3125) {
+      return "🌓";
+    }
+
+    if (phase < 0.4375) {
+      return "🌔";
+    }
+
+    if (phase < 0.5625) {
+      return "🌕";
+    }
+
+    if (phase < 0.6875) {
+      return "🌖";
+    }
+
+    if (phase < 0.8125) {
+      return "🌗";
+    }
+
+    return "🌘";
+
+  }
+
+
+  function displayWeeklyMoonPhases(
+    forecast
+  ) {
+
+    const moonDiv =
+      document.getElementById(
+        'weeklyMoonPhases'
+      );
+
+
+    if (!moonDiv) {
+      return;
+    }
+
+
+    moonDiv.innerHTML =
+      '';
+
+
+    forecast.forEach(
+      day => {
+
+        const date =
+          new Date(
+            `${day.date}T12:00:00`
+          );
+
+
+        const dayName =
+          date.toLocaleDateString(
+            'en-US',
+            {
+              weekday:'short'
+            }
+          );
+
+
+        const moonIcon =
+          getMoonPhaseIcon(
+            Number(day.moon_phase)
+          );
+
+
+        const dayDiv =
+          document.createElement(
+            'div'
+          );
+
+
+        dayDiv.className =
+          'moon-day';
+
+
+        dayDiv.innerHTML = `
+
+          <div class="moon-day-name">
+            ${dayName}
+          </div>
+
+          <div class="moon-icon">
+            ${moonIcon}
+          </div>
+
+        `;
+
+
+        moonDiv.appendChild(
+          dayDiv
+        );
+
+      }
+    );
+
+  }
+
+
   function getWeatherIcon(
     code
   ) {
@@ -1901,6 +2054,16 @@
       forecastDiv.innerHTML =
         '<p>Forecast unavailable</p>';
 
+      const moonDiv =
+        document.getElementById(
+          'weeklyMoonPhases'
+        );
+
+      if (moonDiv) {
+        moonDiv.innerHTML =
+          '<p>Moon phases unavailable</p>';
+      }
+
       return;
 
     }
@@ -1908,6 +2071,11 @@
 
     forecastDiv.innerHTML =
       '';
+
+
+    displayWeeklyMoonPhases(
+      data.forecast
+    );
 
 
     data.forecast.forEach(
