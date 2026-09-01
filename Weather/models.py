@@ -15,3 +15,15 @@ class WeatherPreference(models.Model):
 
 	def __str__(self):
 		return f"{self.user.username}'s weather preferences"
+
+class WeeklyForecastPreference(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    location = models.CharField(max_length=100, blank=True, null=True)
+    unit = models.CharField(max_length=50, default='Fahrenheit')
+    wind_speed_unit = models.CharField(max_length=50, default="mph")
+    precipitation_unit = models.CharField(max_length=10, default="inch")
+    
+    def __str__(self):
+        return f"{self.user.username}'s weekly weather forecast"
