@@ -41,6 +41,47 @@
 .wx-meta .label{ opacity:.8; min-width:78px; }
 .wx-loc{ font-weight:600; opacity:.95; }
 
+/* --- Weekly forecast --- */
+.weekly-forecast {
+  position:absolute;
+  top:35px;
+  right:6%;
+  display:grid;
+  grid-template-columns:repeat(7, 1fr);
+  gap:18px;
+  text-align:center;
+}
+
+.forecast-day {
+  min-width:42px;
+}
+
+.forecast-day-name {
+  font-size:.85rem;
+  font-weight:600;
+  opacity:.8;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+
+.forecast-icon {
+  font-size:1.7rem;
+  margin:5px 0;
+}
+
+.forecast-temperatures {
+  font-size:.9rem;
+  white-space:nowrap;
+}
+
+.forecast-high {
+  font-weight:600;
+}
+
+.forecast-low {
+  opacity:.6;
+}
+
 /* --- Spotify minor tidy (keeps your structure) --- */
 #sp-box { display:flex; align-items:center; gap:12px; margin-top:6px; }
 #sp-img { width:160px; height:160px; object-fit:cover; border-radius:10px; display:none; }
@@ -100,6 +141,13 @@
     <p id="digitalClock">Loading time...</p>
   </div>
 </header>
+
+<div
+  id="weeklyForecast"
+  class="weekly-forecast"
+>
+  <p>Loading forecast...</p>
+</div>
 
 <div class="dashboard-container">
 
@@ -1310,6 +1358,8 @@
 
       fetchWeather();
 
+      fetchWeeklyForecast();
+
       fetchNasaApod();
 
 
@@ -1324,6 +1374,12 @@
 
         },
         5 * 60 * 1000
+      );
+
+
+      setInterval(
+        fetchWeeklyForecast,
+        60 * 60 * 1000
       );
 
 
@@ -1700,6 +1756,234 @@
           );
 
         }
+
+      }
+    );
+
+  }
+
+
+  function getWeatherIcon(
+    code
+  ) {
+
+    if (code === 0) {
+      return "☀";
+    }
+
+    if (
+      code === 1 ||
+      code === 2
+    ) {
+      return "🌤";
+    }
+
+    if (code === 3) {
+      return "☁";
+    }
+
+    if (
+      code === 45 ||
+      code === 48
+    ) {
+      return "🌫";
+    }
+
+    if (
+      code >= 51 &&
+      code <= 57
+    ) {
+      return "🌦";
+    }
+
+    if (
+      code >= 61 &&
+      code <= 67
+    ) {
+      return "🌧";
+    }
+
+    if (
+      code >= 71 &&
+      code <= 77
+    ) {
+      return "❄";
+    }
+
+    if (
+      code >= 80 &&
+      code <= 82
+    ) {
+      return "🌧";
+    }
+
+    if (
+      code >= 85 &&
+      code <= 86
+    ) {
+      return "🌨";
+    }
+
+    if (
+      code >= 95 &&
+      code <= 99
+    ) {
+      return "⛈";
+    }
+
+    return "—";
+
+  }
+
+
+  function fetchWeeklyForecast() {
+
+    fetch(
+      '/Weather/forecast/',
+      {
+        credentials:'include',
+        cache:'no-store'
+      }
+    )
+      .then(
+        response => {
+
+          if (!response.ok) {
+
+            throw new Error(
+              `Weekly forecast request failed: ${response.status}`
+            );
+
+          }
+
+          return response.json();
+
+        }
+      )
+
+      .then(
+        displayWeeklyForecast
+      )
+
+      .catch(
+        error =>
+          console.error(
+            'Error fetching weekly forecast:',
+            error
+          )
+      );
+
+  }
+
+
+  function displayWeeklyForecast(
+    data
+  ) {
+
+    const forecastDiv =
+      document.getElementById(
+        'weeklyForecast'
+      );
+
+
+    if (!forecastDiv) {
+      return;
+    }
+
+
+    if (
+      data.error ||
+      !Array.isArray(
+        data.forecast
+      )
+    ) {
+
+      forecastDiv.innerHTML =
+        '<p>Forecast unavailable</p>';
+
+      return;
+
+    }
+
+
+    forecastDiv.innerHTML =
+      '';
+
+
+    data.forecast.forEach(
+      day => {
+
+        const date =
+          new Date(
+            `${day.date}T12:00:00`
+          );
+
+
+        const dayName =
+          date.toLocaleDateString(
+            'en-US',
+            {
+              weekday:'short'
+            }
+          );
+
+
+        const icon =
+          getWeatherIcon(
+            day.weather_code
+          );
+
+
+        const high =
+          Math.round(
+            day.temperature_max
+          );
+
+
+        const low =
+          Math.round(
+            day.temperature_min
+          );
+
+
+        const dayDiv =
+          document.createElement(
+            'div'
+          );
+
+
+        dayDiv.className =
+          'forecast-day';
+
+
+        dayDiv.innerHTML = `
+
+          <div class="forecast-day-name">
+            ${dayName}
+          </div>
+
+          <div class="forecast-icon">
+            ${icon}
+          </div>
+
+          <div class="forecast-temperatures">
+
+            <span class="forecast-high">
+              ${high}°
+            </span>
+
+            <span class="forecast-low">
+              ${low}°
+            </span>
+
+          </div>
+
+        `;
+
+
+        forecastDiv.appendChild(
+          dayDiv
+        );
 
       }
     );
