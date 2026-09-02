@@ -106,10 +106,82 @@
 }
 
 .moon-icon {
-  font-size:1.65rem;
-  line-height:1;
+  height:24px;
   margin-top:7px;
-  opacity:.78;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.moon-disc {
+  width:20px;
+  height:20px;
+  display:block;
+  position:relative;
+  overflow:hidden;
+  border-radius:50%;
+  border:1px solid rgba(230,230,220,.58);
+  box-sizing:border-box;
+}
+
+.moon-new {
+  background:rgba(230,230,220,.08);
+}
+
+.moon-full {
+  background:rgba(230,230,220,.82);
+}
+
+.moon-first-quarter {
+  background:linear-gradient(
+    to right,
+    rgba(230,230,220,.08) 0 50%,
+    rgba(230,230,220,.82) 50% 100%
+  );
+}
+
+.moon-last-quarter {
+  background:linear-gradient(
+    to right,
+    rgba(230,230,220,.82) 0 50%,
+    rgba(230,230,220,.08) 50% 100%
+  );
+}
+
+.moon-waxing-crescent,
+.moon-waxing-gibbous,
+.moon-waning-gibbous,
+.moon-waning-crescent {
+  background:rgba(230,230,220,.82);
+}
+
+.moon-waxing-crescent::after,
+.moon-waxing-gibbous::after,
+.moon-waning-gibbous::after,
+.moon-waning-crescent::after {
+  content:"";
+  position:absolute;
+  top:-1px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:#000;
+}
+
+.moon-waxing-crescent::after {
+  left:-4px;
+}
+
+.moon-waxing-gibbous::after {
+  left:-12px;
+}
+
+.moon-waning-gibbous::after {
+  right:-12px;
+}
+
+.moon-waning-crescent::after {
+  right:-4px;
 }
 
 /* --- Spotify minor tidy (keeps your structure) --- */
@@ -1808,34 +1880,34 @@
       phase < 0.0625 ||
       phase >= 0.9375
     ) {
-      return "🌑";
+      return "moon-new";
     }
 
     if (phase < 0.1875) {
-      return "🌒";
+      return "moon-waxing-crescent";
     }
 
     if (phase < 0.3125) {
-      return "🌓";
+      return "moon-first-quarter";
     }
 
     if (phase < 0.4375) {
-      return "🌔";
+      return "moon-waxing-gibbous";
     }
 
     if (phase < 0.5625) {
-      return "🌕";
+      return "moon-full";
     }
 
     if (phase < 0.6875) {
-      return "🌖";
+      return "moon-waning-gibbous";
     }
 
     if (phase < 0.8125) {
-      return "🌗";
+      return "moon-last-quarter";
     }
 
-    return "🌘";
+    return "moon-waning-crescent";
 
   }
 
@@ -1900,7 +1972,7 @@
           </div>
 
           <div class="moon-icon">
-            ${moonIcon}
+            <span class="moon-disc ${moonIcon}"></span>
           </div>
 
         `;
